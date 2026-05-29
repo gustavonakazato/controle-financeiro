@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Gestão Financeira Pro - V10.2 (Login por CPF)</title>
+    <title>Gestão Financeira Pro - V10.3 (Correções e Suspensão)</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
@@ -81,9 +81,12 @@
         .lista-itens li { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: white; border: 1px solid #eee; margin-bottom: 5px; border-radius: 4px; font-size: 13px; }
         .lista-itens li button { background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
 
-        /* Área de Administração */
+        /* Área de Administração e Backup */
         .admin-area { grid-column: 1 / -1; background: #fff3cd; padding: 20px; border-radius: 8px; border: 1px solid #ffeeba; margin-top: 10px; }
         .tabela-simples th, .tabela-simples td { padding: 5px; border-bottom: 1px solid #ccc; font-size: 12px; }
+        
+        .backup-area { grid-column: 1 / -1; background: #e8f8f5; padding: 20px; border-radius: 8px; border: 1px solid #1abc9c; margin-top: 10px; }
+        .backup-flex { display: flex; gap: 20px; align-items: center; margin-top: 15px; }
 
         @media print {
             @page { size: landscape; margin: 10mm; }
@@ -105,7 +108,6 @@
         <input type="password" id="senhaAuth" placeholder="Senha">
         
         <button id="btnEntrar" onclick="entrar()">Entrar no Sistema</button>
-        
         <button id="btnRegistrarPrimeiro" class="btn-secundario" style="display:none;" onclick="registrarPrimeiroAdmin()">⚠️ Criar Primeiro Administrador</button>
     </div>
 </div>
@@ -221,6 +223,20 @@
                 <div><h3>📁 Categorias</h3><ul class="lista-itens" id="listaCatConfig"></ul><div style="display:flex; gap:10px;"><input type="text" id="novaCatInput" placeholder="Nova categoria..."><button class="btn-acao-topo" onclick="addConfig('cat')">Adicionar</button></div></div>
                 <div><h3>📌 Status</h3><ul class="lista-itens" id="listaStatusConfig"></ul><div style="display:flex; gap:10px;"><input type="text" id="novoStatusInput" placeholder="Novo status..."><button class="btn-acao-topo" onclick="addConfig('status')">Adicionar</button></div></div>
 
+                <div class="backup-area admin-req">
+                    <h3 style="color: #16a085; margin-top: 0;">💾 Segurança de Dados (Backup e Restauração)</h3>
+                    <p style="margin: 5px 0 0 0; font-size: 13px; color: #555;">Faça o download de um backup regularmente para garantir que você nunca perca seus dados.</p>
+                    <div class="backup-flex">
+                        <button class="btn-acao-topo" style="background: #16a085; font-size: 14px; padding: 10px 15px;" onclick="gerarBackup()">
+                            📥 Baixar Backup .JSON
+                        </button>
+                        <div style="display: flex; align-items: center; gap: 10px; background: white; padding: 6px 12px; border-radius: 4px; border: 1px solid #bdc3c7;">
+                            <input type="file" id="arquivoBackup" accept=".json" style="border: none; padding: 0; width: 220px; font-size: 12px;">
+                            <button class="btn-acao-topo" style="background: #e67e22; padding: 6px 12px;" onclick="restaurarBackup()">📤 Importar / Restaurar Nuvem</button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="admin-area admin-req">
                     <h3 style="color: #d35400; margin-top: 0;">🛡️ Gestão de Usuários (Apenas Administrador)</h3>
                     
@@ -236,10 +252,11 @@
                             </select>
                             <button class="btn-acao-topo" style="background:#27ae60;" onclick="criarNovoUsuarioPeloAdmin()">Criar Conta</button>
                         </div>
+                        <small style="color:#7f8c8d; display:block; margin-top:5px;">⚠️ *Para APAGAR ou MUDAR SENHAS, acesse o painel Firebase > Authentication.</small>
                     </div>
 
                     <table class="tabela-simples" style="width: 100%; background: white;">
-                        <thead><tr><th style="text-align:left;">CPF do Usuário</th><th style="text-align:left;">Perfil de Acesso</th></tr></thead>
+                        <thead><tr><th style="text-align:left;">CPF do Usuário</th><th style="text-align:left;">Perfil de Acesso</th><th style="text-align:left;">Status da Conta</th></tr></thead>
                         <tbody id="tabelaUsuariosAdmin"></tbody>
                     </table>
                 </div>
@@ -303,7 +320,6 @@
             document.getElementById('telaLogin').style.display = 'none';
             document.getElementById('appLogado').style.display = 'block';
             
-            // O e-mail falso é "12345678900@sistema.local". Nós pegamos apenas a parte do CPF.
             let cpfExtraido = user.email.split('@')[0];
             document.getElementById('lblUsuario').innerText = formatarCPFText(cpfExtraido);
             
@@ -334,8 +350,8 @@
         
         const emailFake = cpf + "@sistema.local";
         auth.createUserWithEmailAndPassword(emailFake, s).then(cred => {
-            db.collection("usuarios").doc(cred.user.uid).set({ cpf: cpf, perfil: "Administrador" });
-            alert("Administrador Mestre criado com sucesso! O sistema de criação de contas públicas foi desativado.");
+            db.collection("usuarios").doc(cred.user.uid).set({ cpf: cpf, perfil: "Administrador", status: "Ativo" });
+            alert("Administrador Mestre criado com sucesso!");
         }).catch(err => document.getElementById('loginMsg').innerText = "Erro: " + err.message);
     }
 
@@ -344,7 +360,16 @@
     function carregarPerfilUsuario(user) {
         db.collection("usuarios").doc(user.uid).onSnapshot(doc => {
             if (doc.exists) {
-                perfilUsuario = doc.data().perfil;
+                let dadosUsuario = doc.data();
+                
+                // SISTEMA DE SUSPENSÃO DE CONTA
+                if(dadosUsuario.status === 'Suspenso') {
+                    alert("⚠️ SUA CONTA FOI SUSPENSA PELO ADMINISTRADOR.\nO acesso ao sistema foi revogado.");
+                    auth.signOut();
+                    return;
+                }
+
+                perfilUsuario = dadosUsuario.perfil;
                 document.getElementById('lblPerfil').innerText = perfilUsuario;
                 aplicarRestricoesUI();
             }
@@ -370,7 +395,7 @@
         atualizarTela(); 
     }
 
-    // --- CRIAÇÃO DE USUÁRIOS PELO ADMIN ---
+    // --- CRIAÇÃO E GESTÃO DE USUÁRIOS ---
     function criarNovoUsuarioPeloAdmin() {
         let cpf = document.getElementById('novoUserCpf').value.replace(/\D/g, '');
         const s = document.getElementById('novoUserSenha').value;
@@ -385,7 +410,7 @@
         else { appSecundario = firebase.app("AppSecundario"); }
 
         appSecundario.auth().createUserWithEmailAndPassword(emailFake, s).then(cred => {
-            db.collection("usuarios").doc(cred.user.uid).set({ cpf: cpf, perfil: p });
+            db.collection("usuarios").doc(cred.user.uid).set({ cpf: cpf, perfil: p, status: "Ativo" });
             appSecundario.auth().signOut(); 
             
             registrarLog("CRIOU_USUARIO", `Criou acesso para o CPF: ${formatarCPFText(cpf)} (${p})`);
@@ -397,6 +422,15 @@
             if(err.code === 'auth/email-already-in-use') alert("Erro: Esse CPF já possui cadastro no sistema.");
             else alert("Erro ao criar usuário: " + err.message);
         });
+    }
+
+    function alterarPerfilUser(uid, campo, novoValor) {
+        if(confirm(`Tem certeza que deseja alterar o ${campo} deste usuário?`)) {
+            let updateObj = {};
+            updateObj[campo] = novoValor;
+            db.collection("usuarios").doc(uid).update(updateObj);
+            registrarLog("ALT_USUARIO", `Alterou ${campo} do usuário para ${novoValor}`);
+        }
     }
 
     // --- SISTEMA DE LOGS ---
@@ -425,11 +459,19 @@
                 let h = "";
                 snap.forEach(doc => {
                     let u = doc.data();
-                    h += `<tr><td>${formatarCPFText(u.cpf)}</td><td>
-                        <select onchange="alterarPerfil('${doc.id}', this.value)" style="padding:2px; font-size:12px;">
+                    let statusAtual = u.status || 'Ativo';
+                    h += `<tr><td>${formatarCPFText(u.cpf)}</td>
+                    <td>
+                        <select onchange="alterarPerfilUser('${doc.id}', 'perfil', this.value)" style="padding:2px; font-size:12px;">
                             <option value="Observador" ${u.perfil==='Observador'?'selected':''}>Observador</option>
                             <option value="Financeiro" ${u.perfil==='Financeiro'?'selected':''}>Financeiro</option>
                             <option value="Administrador" ${u.perfil==='Administrador'?'selected':''}>Administrador</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select onchange="alterarPerfilUser('${doc.id}', 'status', this.value)" style="padding:2px; font-size:12px; background: ${statusAtual==='Suspenso'?'#ffdddd':'#e8f8f5'}">
+                            <option value="Ativo" ${statusAtual==='Ativo'?'selected':''}>🟢 Ativo</option>
+                            <option value="Suspenso" ${statusAtual==='Suspenso'?'selected':''}>🔴 Suspenso (Bloquear)</option>
                         </select>
                     </td></tr>`;
                 });
@@ -445,13 +487,6 @@
                 });
                 document.getElementById('tabelaLogsAdmin').innerHTML = h;
             });
-        }
-    }
-
-    function alterarPerfil(uid, novoPerfil) {
-        if(confirm("Alterar o perfil deste usuário?")) {
-            db.collection("usuarios").doc(uid).update({ perfil: novoPerfil });
-            registrarLog("ALTEROU_PERFIL", `Mudou perfil interno do registro ${uid} para ${novoPerfil}`);
         }
     }
 
@@ -472,7 +507,7 @@
     }
     function mudarSubAbaMes(s) { document.querySelectorAll('#subMesAnterior, #subMesAtual, #subMesPosterior').forEach(el=>el.style.display='none'); document.querySelectorAll('.sub-aba-btn').forEach(el=>el.classList.remove('sub-aba-ativa')); document.getElementById("subMes"+s).style.display="block"; document.getElementById("btnSub"+s).classList.add('sub-aba-ativa'); }
     function formata(v) { return v.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}); }
-    function formataData(d) { return d.split('-').reverse().join('/'); }
+    function formataData(d) { if(!d) return ""; return d.split('-').reverse().join('/'); }
 
     function carregarListas() {
         document.getElementById("cadCat").innerHTML = categorias.map(c => `<option value="${c}">${c}</option>`).join('');
@@ -573,11 +608,12 @@
         
         let tEnt = 0, tSai = 0; const hoje = new Date().toISOString().split('T')[0];
 
-        let dadosFiltradosGlobais = lancamentos.filter(l => 
-            l.desc.toLowerCase().includes(fBusca) && (fTipo === "Todos" || l.tipo === fTipo) &&
+        let dadosFiltradosGlobais = lancamentos.filter(l => {
+            if(!l.data || !l.status) return false;
+            return l.desc.toLowerCase().includes(fBusca) && (fTipo === "Todos" || l.tipo === fTipo) &&
             (fCat === "Todos" || l.categoria === fCat) &&  (fConta === "Todas" || l.conta === fConta) &&
-            (fStatus === "Todos" || l.status === fStatus) && (!fIni || l.data >= fIni) && (!fFim || l.data <= fFim)
-        ).sort((a,b) => fOrdem === 'asc' ? new Date(a.data) - new Date(b.data) : new Date(b.data) - new Date(a.data));
+            (fStatus === "Todos" || l.status === fStatus) && (!fIni || l.data >= fIni) && (!fFim || l.data <= fFim);
+        }).sort((a,b) => fOrdem === 'asc' ? new Date(a.data) - new Date(b.data) : new Date(b.data) - new Date(a.data));
 
         dadosFiltradosGlobais.forEach(l => {
             if (l.tipo === "Crédito") tEnt += l.valor; else tSai += l.valor;
@@ -619,6 +655,37 @@
             db.collection("lancamentos").doc(id.toString()).delete();
             registrarLog("EXCLUIU", `Excluiu lançamento ID: ${id}`);
         } 
+    }
+
+    // --- FUNÇÕES DE BACKUP QUE HAVIAM SUMIDO ---
+    function gerarBackup() {
+        const backupData = { dados: lancamentos, categorias: categorias, status: statusLista, contas: contasLista };
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+        const downloadAnchorNode = document.createElement('a'); downloadAnchorNode.setAttribute("href", dataStr); downloadAnchorNode.setAttribute("download", `backup_financas_${new Date().toISOString().split('T')[0]}.json`); document.body.appendChild(downloadAnchorNode); downloadAnchorNode.click(); downloadAnchorNode.remove();
+        registrarLog("BACKUP", "Fez o download de segurança em .JSON");
+    }
+
+    function restaurarBackup() {
+        const fileInput = document.getElementById('arquivoBackup'); const file = fileInput.files[0];
+        if (!file) return alert("Por favor, selecione o arquivo .json primeiro!");
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const backup = JSON.parse(e.target.result);
+                if (backup.dados && backup.categorias && backup.status && backup.contas) {
+                    if(confirm("ATENÇÃO: Isso vai enviar todos os dados do arquivo para a nuvem. Continuar?")) {
+                        db.collection("config").doc("listas").set({ categorias: backup.categorias, statusLista: backup.status, contasLista: backup.contas });
+                        let batch = db.batch();
+                        backup.dados.forEach(l => { batch.set(db.collection("lancamentos").doc(l.id.toString()), l); });
+                        batch.commit().then(() => {
+                            registrarLog("RESTAURACAO", "Restaurou banco de dados via .JSON");
+                            alert("Backup restaurado na nuvem com sucesso!");
+                        });
+                    }
+                } else alert("Arquivo inválido.");
+            } catch (error) { alert("Erro de leitura."); }
+        };
+        reader.readAsText(file);
     }
 
     function exportarCSV() {
@@ -663,8 +730,16 @@
         document.getElementById("tituloMesAnterior").innerText = `Mês Anterior (${nm[mAnt.getMonth()]} ${mAnt.getFullYear()})`;
         document.getElementById("tituloMesAtual").innerText = `Mês Atual (${nm[mes]} ${ano})`;
         document.getElementById("tituloMesPosterior").innerText = `Mês Posterior (${nm[mPos.getMonth()]} ${mPos.getFullYear()})`;
-        const rTb = (p, id) => { let h = lancamentos.filter(l => l.data.startsWith(p)).sort((a,b) => new Date(a.data) - new Date(b.data)).map(l => `<tr style="color: ${l.status.toLowerCase().includes('efetuada') ? '#7f8c8d' : '#333'};"><td><strong>${formataData(l.data)}</strong></td><td><strong>${l.desc}</strong><br><small>🏦 ${l.conta || 'Geral'}</small></td><td>${l.categoria}</td><td>${l.tipo}</td><td style="color:${l.tipo==='Débito'?'#e74c3c':'#27ae60'};font-weight:bold;">${formata(l.valor)}</td><td>${l.status}</td></tr>`).join(''); document.getElementById(id).innerHTML = h || '<tr><td colspan="6" style="text-align:center; color:#999;">Vazio</td></tr>'; };
-        rTb(getStr(mAnt.getFullYear(), mAnt.getMonth()), "tbMesAnterior"); rTb(getStr(ano, mes), "tbMesAtual"); rTb(getStr(mPos.getFullYear(), mPos.getMonth()), "tbMesPosterior");
+        
+        const rTb = (p, id) => { 
+            let filtrados = lancamentos.filter(l => l.data && l.data.startsWith(p)).sort((a,b) => new Date(a.data) - new Date(b.data));
+            let h = filtrados.map(l => `<tr style="color: ${(l.status || '').toLowerCase().includes('efetuada') ? '#7f8c8d' : '#333'};"><td><strong>${formataData(l.data)}</strong></td><td><strong>${l.desc}</strong><br><small>🏦 ${l.conta || 'Geral'}</small></td><td>${l.categoria}</td><td>${l.tipo}</td><td style="color:${l.tipo==='Débito'?'#e74c3c':'#27ae60'};font-weight:bold;">${formata(l.valor)}</td><td>${l.status}</td></tr>`).join(''); 
+            document.getElementById(id).innerHTML = h || '<tr><td colspan="6" style="text-align:center; color:#999;">Sem lançamentos neste mês.</td></tr>'; 
+        };
+        
+        rTb(getStr(mAnt.getFullYear(), mAnt.getMonth()), "tbMesAnterior"); 
+        rTb(getStr(ano, mes), "tbMesAtual"); 
+        rTb(getStr(mPos.getFullYear(), mPos.getMonth()), "tbMesPosterior");
     }
 
 </script>
