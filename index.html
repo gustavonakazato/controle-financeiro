@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Gestão Financeira Pro - V10.3 (Correções e Suspensão)</title>
+    <title>Morarbem - Controle Financeiro</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
@@ -13,16 +13,22 @@
     <style>
         body { font-family: 'Segoe UI', sans-serif; background-color: #e9ecef; color: #333; padding: 0; margin: 0; }
         
-        /* TELA DE LOGIN */
-        #telaLogin { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #2c3e50; display: flex; justify-content: center; align-items: center; z-index: 9999; }
-        .login-box { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); width: 100%; max-width: 350px; text-align: center; }
+        /* TELA DE LOGIN APRIMORADA */
+        #telaLogin { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #2c3e50; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
+        
+        /* TÍTULO DA EMPRESA */
+        .titulo-empresa { color: white; text-align: center; margin-bottom: 40px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); line-height: 1.3; }
+        .titulo-empresa .menor { font-size: 22px; font-weight: normal; color: #bdc3c7; }
+        .titulo-empresa .maior { font-size: 32px; font-weight: bold; color: #27ae60; text-transform: uppercase; }
+
+        .login-box { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); width: 100%; max-width: 380px; text-align: center; }
         .login-box h2 { color: #2c3e50; margin-top: 0; }
-        .login-box input { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .login-box button { width: 100%; padding: 10px; background: #27ae60; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
+        .login-box input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 15px; }
+        .login-box button { width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-bottom: 10px; font-size: 15px; }
         .login-box button:hover { background: #219150; }
         .btn-secundario { background: #e74c3c !important; }
         .btn-secundario:hover { background: #c0392b !important; }
-        #loginMsg { color: #e74c3c; font-size: 13px; margin-bottom: 10px; height: 15px; font-weight: bold; }
+        #loginMsg { color: #e74c3c; font-size: 14px; margin-bottom: 10px; height: 15px; font-weight: bold; }
 
         /* HEADER LOGADO */
         .header-top { background: #1a252f; color: white; padding: 5px 20px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
@@ -101,6 +107,12 @@
 <body>
 
 <div id="telaLogin">
+    
+    <div class="titulo-empresa">
+        <div class="menor">Controle Financeiro</div>
+        <div class="maior">Construtora e Incorporadora<br>Morarbem Ltda</div>
+    </div>
+
     <div class="login-box">
         <h2>🔒 Acesso Restrito</h2>
         <div id="loginMsg"></div>
@@ -211,9 +223,21 @@
                 <button id="btnSubAnterior" class="sub-aba-btn" onclick="mudarSubAbaMes('Anterior')">⬅️ Mês Anterior</button>
                 <button id="btnSubPosterior" class="sub-aba-btn" onclick="mudarSubAbaMes('Posterior')">➡️ Mês Posterior</button>
             </div>
-            <div id="subMesAnterior" style="display: none;"><table><tbody id="tbMesAnterior"></tbody></table></div>
-            <div id="subMesAtual"><table><tbody id="tbMesAtual"></tbody></table></div>
-            <div id="subMesPosterior" style="display: none;"><table><tbody id="tbMesPosterior"></tbody></table></div>
+            
+            <div id="subMesAnterior" style="display: none;">
+                <h3 id="tituloMesAnterior" style="color: #7f8c8d; border-bottom: 2px solid #eee; padding-bottom: 5px;">Mês Anterior</h3>
+                <table><thead><tr><th style="width:12%;">Data</th><th style="width:48%;">Descrição / Conta</th><th style="width:12%;">Categoria</th><th style="width:10%;">Tipo</th><th style="width:10%;">Valor</th><th style="width:8%;">Status</th></tr></thead><tbody id="tbMesAnterior"></tbody></table>
+            </div>
+            
+            <div id="subMesAtual">
+                <h3 id="tituloMesAtual" style="color: #2980b9; border-bottom: 2px solid #2980b9; padding-bottom: 5px;">Mês Atual</h3>
+                <table><thead><tr><th style="width:12%;">Data</th><th style="width:48%;">Descrição / Conta</th><th style="width:12%;">Categoria</th><th style="width:10%;">Tipo</th><th style="width:10%;">Valor</th><th style="width:8%;">Status</th></tr></thead><tbody id="tbMesAtual"></tbody></table>
+            </div>
+            
+            <div id="subMesPosterior" style="display: none;">
+                <h3 id="tituloMesPosterior" style="color: #f39c12; border-bottom: 2px solid #f39c12; padding-bottom: 5px;">Mês Posterior</h3>
+                <table><thead><tr><th style="width:12%;">Data</th><th style="width:48%;">Descrição / Conta</th><th style="width:12%;">Categoria</th><th style="width:10%;">Tipo</th><th style="width:10%;">Valor</th><th style="width:8%;">Status</th></tr></thead><tbody id="tbMesPosterior"></tbody></table>
+            </div>
         </div>
 
         <div id="abaConfig" class="painel-branco aba-conteudo" style="display: none;">
@@ -252,7 +276,7 @@
                             </select>
                             <button class="btn-acao-topo" style="background:#27ae60;" onclick="criarNovoUsuarioPeloAdmin()">Criar Conta</button>
                         </div>
-                        <small style="color:#7f8c8d; display:block; margin-top:5px;">⚠️ *Para APAGAR ou MUDAR SENHAS, acesse o painel Firebase > Authentication.</small>
+                        <small style="color:#7f8c8d; display:block; margin-top:5px;">⚠️ *Para APAGAR ou MUDAR SENHAS definitivamente, acesse o painel Firebase > Authentication.</small>
                     </div>
 
                     <table class="tabela-simples" style="width: 100%; background: white;">
@@ -362,7 +386,7 @@
             if (doc.exists) {
                 let dadosUsuario = doc.data();
                 
-                // SISTEMA DE SUSPENSÃO DE CONTA
+                // SISTEMA DE SUSPENSÃO
                 if(dadosUsuario.status === 'Suspenso') {
                     alert("⚠️ SUA CONTA FOI SUSPENSA PELO ADMINISTRADOR.\nO acesso ao sistema foi revogado.");
                     auth.signOut();
@@ -505,7 +529,14 @@
         if(abaId === 'relatorios') gerarRelatorios();
         if(abaId === 'mensal') { mudarSubAbaMes('Atual'); gerarVisaoMensal(); }
     }
-    function mudarSubAbaMes(s) { document.querySelectorAll('#subMesAnterior, #subMesAtual, #subMesPosterior').forEach(el=>el.style.display='none'); document.querySelectorAll('.sub-aba-btn').forEach(el=>el.classList.remove('sub-aba-ativa')); document.getElementById("subMes"+s).style.display="block"; document.getElementById("btnSub"+s).classList.add('sub-aba-ativa'); }
+    
+    function mudarSubAbaMes(s) { 
+        document.querySelectorAll('#subMesAnterior, #subMesAtual, #subMesPosterior').forEach(el=>el.style.display='none'); 
+        document.querySelectorAll('.sub-aba-btn').forEach(el=>el.classList.remove('sub-aba-ativa')); 
+        document.getElementById("subMes"+s).style.display="block"; 
+        document.getElementById("btnSub"+s).classList.add('sub-aba-ativa'); 
+    }
+    
     function formata(v) { return v.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}); }
     function formataData(d) { if(!d) return ""; return d.split('-').reverse().join('/'); }
 
@@ -657,7 +688,7 @@
         } 
     }
 
-    // --- FUNÇÕES DE BACKUP QUE HAVIAM SUMIDO ---
+    // --- FUNÇÕES DE BACKUP ---
     function gerarBackup() {
         const backupData = { dados: lancamentos, categorias: categorias, status: statusLista, contas: contasLista };
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
