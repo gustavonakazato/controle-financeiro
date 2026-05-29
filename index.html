@@ -2,15 +2,30 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Gestão Financeira Pro - V9.1 (Nuvem)</title>
+    <title>Gestão Financeira Pro - V10.2 (Login por CPF)</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
 
     <style>
         body { font-family: 'Segoe UI', sans-serif; background-color: #e9ecef; color: #333; padding: 0; margin: 0; }
+        
+        /* TELA DE LOGIN */
+        #telaLogin { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #2c3e50; display: flex; justify-content: center; align-items: center; z-index: 9999; }
+        .login-box { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); width: 100%; max-width: 350px; text-align: center; }
+        .login-box h2 { color: #2c3e50; margin-top: 0; }
+        .login-box input { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .login-box button { width: 100%; padding: 10px; background: #27ae60; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
+        .login-box button:hover { background: #219150; }
+        .btn-secundario { background: #e74c3c !important; }
+        .btn-secundario:hover { background: #c0392b !important; }
+        #loginMsg { color: #e74c3c; font-size: 13px; margin-bottom: 10px; height: 15px; font-weight: bold; }
+
+        /* HEADER LOGADO */
+        .header-top { background: #1a252f; color: white; padding: 5px 20px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
         
         /* Menu Superior */
         .navbar { background-color: #2c3e50; padding: 15px 20px; display: flex; gap: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
@@ -20,8 +35,6 @@
         .aba-ativa:hover { background-color: #219150; }
 
         .container-principal { padding: 20px; max-width: 1650px; margin: 0 auto; }
-
-        /* Layout Base */
         .layout-flex { display: flex; gap: 20px; }
         .painel-cadastro { width: 22%; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); height: fit-content; position: sticky; top: 20px; }
         .painel-conteudo { width: 78%; display: flex; flex-direction: column; gap: 15px; }
@@ -35,46 +48,29 @@
         .btn { display: block; width: 100%; background-color: #27ae60; color: white; padding: 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 15px; font-weight: bold; margin-top: 15px; }
         .btn-editando { background-color: #f39c12; }
         .btn-limpar { background-color: #7f8c8d; }
-        .btn-limpar:hover { background-color: #636e72; }
-        
         .btn-acao-topo { background: #34495e; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 5px; }
-        .btn-acao-topo:hover { background: #2c3e50; }
-        .btn-pdf { background: #c0392b; }
-        .btn-pdf:hover { background: #a53125; }
-        .btn-csv { background: #27ae60; }
-        .btn-csv:hover { background: #219150; }
-
-        /* Resumos e Filtros */
+        
         .resumo-container { display: flex; gap: 20px; }
-        .card { flex: 1; background: white; padding: 10px 15px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid #ddd; }
+        .card { flex: 1; background: white; padding: 10px 15px; border-radius: 8px; text-align: center; border-bottom: 4px solid #ddd; }
         .card h4 { margin: 0; font-size: 12px; }
         .card p { margin: 4px 0 0 0; font-size: 20px; font-weight: bold; }
+        
         .filtros-area { background: #f8f9fa; padding: 12px 15px; border-radius: 6px; border: 1px solid #e1e5eb; margin-bottom: 15px; }
-        
-        /* Ajustado para 8 colunas para caber o filtro de Ordem */
         .filtros-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; align-items: end; }
-        
         .acoes-tabela { display: flex; gap: 10px; margin-top: 10px; justify-content: flex-end; border-top: 1px solid #eee; padding-top: 10px; }
 
-        /* Tabela e Destaques de Vencimento */
         table { width: 100%; border-collapse: collapse; margin-bottom: 20px; table-layout: fixed; }
         th, td { padding: 8px; text-align: left; border-bottom: 1px solid #eee; font-size: 13px; word-wrap: break-word; }
         th { background-color: #f8f9fa; border-bottom: 2px solid #ddd; color: #333; }
-        
-        /* Classes de Destaque */
-        .vencido { background-color: #ffdddd; } /* Vermelho mais forte */
-        .vence-hoje { background-color: #fff3cd; } /* Amarelo de alerta */
-        
+        .vencido { background-color: #ffdddd; }
+        .vence-hoje { background-color: #fff3cd; }
         .btn-acao { border: none; background: none; cursor: pointer; font-size: 16px; padding: 4px; border-radius: 4px; }
         .btn-acao:hover { background: #eee; }
 
-        /* Sub-abas Mensal */
         .sub-navbar { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        .sub-aba-btn { background: none; border: none; font-size: 15px; font-weight: bold; color: #7f8c8d; cursor: pointer; padding: 8px 15px; border-radius: 4px; transition: 0.2s; }
-        .sub-aba-btn:hover { background: #f1f2f6; }
+        .sub-aba-btn { background: none; border: none; font-size: 15px; font-weight: bold; color: #7f8c8d; cursor: pointer; padding: 8px 15px; border-radius: 4px; }
         .sub-aba-ativa { color: #2980b9; background: #ebf5fb; border-bottom: 3px solid #2980b9; border-radius: 4px 4px 0 0; }
 
-        /* Relatórios e Configs */
         .relatorios-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .rel-box { background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e1e5eb; }
         .rel-linha { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #ccc; font-size: 13px; }
@@ -85,201 +81,176 @@
         .lista-itens li { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: white; border: 1px solid #eee; margin-bottom: 5px; border-radius: 4px; font-size: 13px; }
         .lista-itens li button { background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
 
-        /* Área de Backup */
-        .backup-area { grid-column: 1 / -1; background: #e8f8f5; padding: 20px; border-radius: 8px; border: 1px solid #1abc9c; margin-top: 10px; }
-        .backup-flex { display: flex; gap: 20px; align-items: center; margin-top: 15px; }
+        /* Área de Administração */
+        .admin-area { grid-column: 1 / -1; background: #fff3cd; padding: 20px; border-radius: 8px; border: 1px solid #ffeeba; margin-top: 10px; }
+        .tabela-simples th, .tabela-simples td { padding: 5px; border-bottom: 1px solid #ccc; font-size: 12px; }
 
-        /* Impressão Forçada para o formato PAISAGEM (Landscape) */
         @media print {
             @page { size: landscape; margin: 10mm; }
             body { background: white; padding: 0; }
-            .navbar, .painel-cadastro, .filtros-area, .acoes-tabela, td:last-child, th:last-child, .sub-navbar { display: none !important; }
+            .navbar, .painel-cadastro, .filtros-area, .acoes-tabela, .header-top, td:last-child, th:last-child, .sub-navbar { display: none !important; }
             .layout-flex { display: block; }
             .painel-conteudo { width: 100%; box-shadow: none; }
             .painel-branco { box-shadow: none; padding: 0; }
-            .card { border: 1px solid #ddd; }
         }
     </style>
 </head>
 <body>
 
-<div class="navbar" data-html2canvas-ignore>
-    <button id="btnAbaDashboard" class="aba-btn aba-ativa" onclick="mudarAba('dashboard')">📊 Dashboard</button>
-    <button id="btnAbaRelatorios" class="aba-btn" onclick="mudarAba('relatorios')">📈 Resumo por Categoria</button>
-    <button id="btnAbaMensal" class="aba-btn" onclick="mudarAba('mensal')">📅 Visão Mensal</button>
-    <button id="btnAbaConfig" class="aba-btn" onclick="mudarAba('config')">⚙️ Configurações</button>
+<div id="telaLogin">
+    <div class="login-box">
+        <h2>🔒 Acesso Restrito</h2>
+        <div id="loginMsg"></div>
+        <input type="text" id="cpfAuth" placeholder="CPF (Apenas números)">
+        <input type="password" id="senhaAuth" placeholder="Senha">
+        
+        <button id="btnEntrar" onclick="entrar()">Entrar no Sistema</button>
+        
+        <button id="btnRegistrarPrimeiro" class="btn-secundario" style="display:none;" onclick="registrarPrimeiroAdmin()">⚠️ Criar Primeiro Administrador</button>
+    </div>
 </div>
 
-<div class="container-principal">
-    
-    <div id="abaDashboard" class="layout-flex aba-conteudo">
-        <div class="painel-cadastro" data-html2canvas-ignore>
-            <h2 id="tituloCadastro">💸 Registro</h2>
-            <input type="hidden" id="editId">
-            <div class="form-group"><label>Descrição:</label><input type="text" id="cadDesc"></div>
-            
-            <div style="display: flex; gap: 10px;">
-                <div class="form-group" style="flex: 1;"><label>Categoria:</label><select id="cadCat"></select></div>
-                <div class="form-group" style="flex: 1;"><label>Conta/Banco:</label><select id="cadConta"></select></div>
+<div id="appLogado" style="display: none;">
+    <div class="header-top">
+        <span>👤 CPF: <b id="lblUsuario"></b> (<span id="lblPerfil"></span>)</span>
+        <button onclick="sair()" style="background:none; border:none; color:white; cursor:pointer; font-weight:bold; text-decoration:underline;">Sair / Logout</button>
+    </div>
+
+    <div class="navbar" data-html2canvas-ignore>
+        <button id="btnAbaDashboard" class="aba-btn aba-ativa" onclick="mudarAba('dashboard')">📊 Dashboard</button>
+        <button id="btnAbaRelatorios" class="aba-btn" onclick="mudarAba('relatorios')">📈 Resumo Categoria</button>
+        <button id="btnAbaMensal" class="aba-btn" onclick="mudarAba('mensal')">📅 Visão Mensal</button>
+        <button id="btnAbaConfig" class="aba-btn config-req" onclick="mudarAba('config')">⚙️ Configurações e Admin</button>
+    </div>
+
+    <div class="container-principal">
+        
+        <div id="abaDashboard" class="layout-flex aba-conteudo">
+            <div class="painel-cadastro fin-req" data-html2canvas-ignore id="painelCadastro">
+                <h2 id="tituloCadastro">💸 Registro</h2>
+                <input type="hidden" id="editId">
+                <div class="form-group"><label>Descrição:</label><input type="text" id="cadDesc"></div>
+                <div style="display: flex; gap: 10px;">
+                    <div class="form-group" style="flex: 1;"><label>Categoria:</label><select id="cadCat"></select></div>
+                    <div class="form-group" style="flex: 1;"><label>Conta:</label><select id="cadConta"></select></div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <div class="form-group" style="flex: 1;"><label>Valor (R$):</label><input type="number" id="cadValor" step="0.01"></div>
+                    <div class="form-group" style="flex: 1;"><label>Data Início:</label><input type="date" id="cadData"></div>
+                </div>
+                <div class="form-group"><label>Tipo:</label><select id="cadTipo"><option value="Débito">Débito</option><option value="Crédito">Crédito</option></select></div>
+                <div class="form-group"><label>Pagamento:</label><select id="cadPagamento" onchange="toggleOpcoesPagamento()"><option value="À Vista">À Vista</option><option value="Parcelado">Parcelado</option><option value="Recorrente">Recorrente</option></select></div>
+                <div id="caixaOpcoesPagamento" style="display: none; background: #f0f4f8; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
+                    <label id="labelOpcoesPagamento">Nº de Parcelas:</label><input type="number" id="numRepeticoes" value="2" min="2">
+                </div>
+                <div class="form-group"><label>Status Inicial:</label><select id="cadStatus"></select></div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn" id="btnSalvar" style="flex: 2; margin-top: 10px;" onclick="adicionarLancamento()">Registrar</button>
+                    <button class="btn btn-limpar" style="flex: 1; margin-top: 10px;" onclick="limparFormulario()">🧹 Limpar</button>
+                </div>
             </div>
 
-            <div style="display: flex; gap: 10px;">
-                <div class="form-group" style="flex: 1;"><label>Valor (R$):</label><input type="number" id="cadValor" step="0.01"></div>
-                <div class="form-group" style="flex: 1;"><label>Data Início:</label><input type="date" id="cadData"></div>
-            </div>
-            
-            <div class="form-group"><label>Tipo:</label><select id="cadTipo"><option value="Débito">Débito (Saída)</option><option value="Crédito">Crédito (Entrada)</option></select></div>
-            
-            <div class="form-group">
-                <label>Pagamento:</label>
-                <select id="cadPagamento" onchange="toggleOpcoesPagamento()">
-                    <option value="À Vista">À Vista (Única vez)</option>
-                    <option value="Parcelado">Parcelado (Divide o valor)</option>
-                    <option value="Recorrente">Recorrente (Repete o valor)</option>
-                </select>
-            </div>
-            
-            <div id="caixaOpcoesPagamento" style="display: none; background: #f0f4f8; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
-                <label id="labelOpcoesPagamento">Nº de Parcelas:</label>
-                <input type="number" id="numRepeticoes" value="2" min="2">
-            </div>
+            <div class="painel-conteudo" id="areaRelatorioPDF">
+                <h2 style="display: none; text-align: center; margin-bottom: 20px;" id="tituloPDF">Relatório Financeiro</h2>
+                <div class="resumo-container">
+                    <div class="card" style="border-color: #27ae60;"><h4>Entradas</h4><p style="color: #27ae60;" id="resEntradas">R$ 0,00</p></div>
+                    <div class="card" style="border-color: #e74c3c;"><h4>Saídas</h4><p style="color: #e74c3c;" id="resSaidas">R$ 0,00</p></div>
+                    <div class="card" style="border-color: #2980b9;"><h4>Saldo do Período</h4><p id="resSaldo">R$ 0,00</p></div>
+                </div>
 
-            <div class="form-group"><label>Status Inicial:</label><select id="cadStatus"></select></div>
-            
-            <div style="display: flex; gap: 10px;">
-                <button class="btn" id="btnSalvar" style="flex: 2; margin-top: 10px;" onclick="adicionarLancamento()">Registrar</button>
-                <button class="btn btn-limpar" style="flex: 1; margin-top: 10px;" onclick="limparFormulario()">🧹 Limpar</button>
-            </div>
-        </div>
-
-        <div class="painel-conteudo" id="areaRelatorioPDF">
-            <h2 style="display: none; text-align: center; margin-bottom: 20px;" id="tituloPDF">Relatório Financeiro</h2>
-
-            <div class="resumo-container">
-                <div class="card" style="border-color: #27ae60;"><h4>Entradas</h4><p style="color: #27ae60;" id="resEntradas">R$ 0,00</p></div>
-                <div class="card" style="border-color: #e74c3c;"><h4>Saídas</h4><p style="color: #e74c3c;" id="resSaidas">R$ 0,00</p></div>
-                <div class="card" style="border-color: #2980b9;"><h4>Saldo do Período</h4><p id="resSaldo">R$ 0,00</p></div>
-            </div>
-
-            <div class="painel-branco">
-                <div class="filtros-area" data-html2canvas-ignore>
-                    <div class="filtros-grid">
-                        <div><label>Busca:</label><input type="text" id="fBusca" oninput="atualizarTela()"></div>
-                        <div><label>Conta:</label><select id="fConta" onchange="atualizarTela()"></select></div>
-                        <div><label>Categoria:</label><select id="fCat" onchange="atualizarTela()"></select></div>
-                        <div><label>Tipo:</label><select id="fTipo" onchange="atualizarTela()"><option value="Todos">Todos</option><option value="Débito">Débito</option><option value="Crédito">Crédito</option></select></div>
-                        <div><label>Status:</label><select id="fStatus" onchange="atualizarTela()"></select></div>
-                        <div><label>De:</label><input type="date" id="fDataInicio" onchange="atualizarTela()"></div>
-                        <div><label>Até:</label><input type="date" id="fDataFim" onchange="atualizarTela()"></div>
-                        
-                        <div>
-                            <label>Ordem Data:</label>
-                            <select id="fOrdem" onchange="atualizarTela()">
-                                <option value="asc">Antigos 1º</option>
-                                <option value="desc">Recentes 1º</option>
-                            </select>
+                <div class="painel-branco">
+                    <div class="filtros-area" data-html2canvas-ignore>
+                        <div class="filtros-grid">
+                            <div><label>Busca:</label><input type="text" id="fBusca" oninput="atualizarTela()"></div>
+                            <div><label>Conta:</label><select id="fConta" onchange="atualizarTela()"></select></div>
+                            <div><label>Categoria:</label><select id="fCat" onchange="atualizarTela()"></select></div>
+                            <div><label>Tipo:</label><select id="fTipo" onchange="atualizarTela()"><option value="Todos">Todos</option><option value="Débito">Débito</option><option value="Crédito">Crédito</option></select></div>
+                            <div><label>Status:</label><select id="fStatus" onchange="atualizarTela()"></select></div>
+                            <div><label>De:</label><input type="date" id="fDataInicio" onchange="atualizarTela()"></div>
+                            <div><label>Até:</label><input type="date" id="fDataFim" onchange="atualizarTela()"></div>
+                            <div><label>Ordem:</label><select id="fOrdem" onchange="atualizarTela()"><option value="asc">Antigos 1º</option><option value="desc">Recentes 1º</option></select></div>
+                        </div>
+                        <div class="acoes-tabela">
+                            <button class="btn-acao-topo btn-csv" onclick="exportarCSV()">📥 Exportar CSV</button>
+                            <button class="btn-acao-topo btn-pdf" onclick="exportarPDF()">📄 Exportar PDF</button>
+                            <button class="btn-acao-topo" onclick="window.print()">🖨️ Imprimir</button>
                         </div>
                     </div>
-                    <div class="acoes-tabela">
-                        <button class="btn-acao-topo btn-csv" onclick="exportarCSV()">📥 Exportar CSV</button>
-                        <button class="btn-acao-topo btn-pdf" onclick="exportarPDF()">📄 Exportar PDF</button>
-                        <button class="btn-acao-topo" onclick="window.print()">🖨️ Imprimir</button>
-                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 12%;">Vencimento</th><th style="width: 50%;">Descrição</th><th style="width: 12%;">Valor</th><th style="width: 10%;">Tipo</th><th style="width: 10%;">Status</th><th style="width: 6%; text-align: center;" data-html2canvas-ignore class="fin-req">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="corpoTabela"></tbody>
+                    </table>
                 </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="width: 12%;">Vencimento</th>
-                            <th style="width: 50%;">Descrição / Detalhes</th>
-                            <th style="width: 12%;">Valor</th>
-                            <th style="width: 10%;">Tipo</th>
-                            <th style="width: 10%;">Status</th>
-                            <th style="width: 6%; text-align: center;" data-html2canvas-ignore>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="corpoTabela"></tbody>
-                </table>
             </div>
         </div>
-    </div>
 
-    <div id="abaRelatorios" class="painel-branco aba-conteudo" style="display: none;">
-        <h2>📈 Resumo Financeiro por Categoria</h2>
-        <div class="filtros-area" style="display: flex; gap: 15px; max-width: 500px;" data-html2canvas-ignore>
-            <div style="flex: 1;"><label>Período De:</label><input type="date" id="rDataInicio" onchange="gerarRelatorios()"></div>
-            <div style="flex: 1;"><label>Até:</label><input type="date" id="rDataFim" onchange="gerarRelatorios()"></div>
-        </div>
-        <div class="relatorios-grid">
-            <div class="rel-box"><h3 style="color: #27ae60; font-size: 15px;">✅ Entradas (Créditos Efetuados)</h3><div id="relCreditoEfetuado"></div></div>
-            <div class="rel-box"><h3 style="color: #e74c3c; font-size: 15px;">✅ Saídas (Débitos Efetuados)</h3><div id="relDebitoEfetuado"></div></div>
-            <div class="rel-box"><h3 style="color: #f39c12; font-size: 15px;">⏳ A Receber (Créditos A Vencer)</h3><div id="relCreditoVencer"></div></div>
-            <div class="rel-box"><h3 style="color: #c0392b; font-size: 15px;">⏳ A Pagar (Débitos A Vencer)</h3><div id="relDebitoVencer"></div></div>
-        </div>
-    </div>
-
-    <div id="abaMensal" class="painel-branco aba-conteudo" style="display: none;">
-        <h2>📅 Visão Mensal (Linha do Tempo)</h2>
-        
-        <div class="sub-navbar">
-            <button id="btnSubAtual" class="sub-aba-btn sub-aba-ativa" onclick="mudarSubAbaMes('Atual')">📍 Mês Atual</button>
-            <button id="btnSubAnterior" class="sub-aba-btn" onclick="mudarSubAbaMes('Anterior')">⬅️ Mês Anterior</button>
-            <button id="btnSubPosterior" class="sub-aba-btn" onclick="mudarSubAbaMes('Posterior')">➡️ Mês Posterior</button>
-        </div>
-
-        <div id="subMesAnterior" style="display: none;">
-            <h3 id="tituloMesAnterior" style="color: #7f8c8d; border-bottom: 2px solid #eee; padding-bottom: 5px;">Mês Anterior</h3>
-            <table>
-                <thead><tr><th style="width:12%;">Data</th><th style="width:48%;">Descrição / Conta</th><th style="width:12%;">Categoria</th><th style="width:10%;">Tipo</th><th style="width:10%;">Valor</th><th style="width:8%;">Status</th></tr></thead>
-                <tbody id="tbMesAnterior"></tbody>
-            </table>
-        </div>
-
-        <div id="subMesAtual">
-            <h3 id="tituloMesAtual" style="color: #2980b9; border-bottom: 2px solid #2980b9; padding-bottom: 5px;">Mês Atual</h3>
-            <table>
-                <thead><tr><th style="width:12%;">Data</th><th style="width:48%;">Descrição / Conta</th><th style="width:12%;">Categoria</th><th style="width:10%;">Tipo</th><th style="width:10%;">Valor</th><th style="width:8%;">Status</th></tr></thead>
-                <tbody id="tbMesAtual"></tbody>
-            </table>
-        </div>
-
-        <div id="subMesPosterior" style="display: none;">
-            <h3 id="tituloMesPosterior" style="color: #f39c12; border-bottom: 2px solid #f39c12; padding-bottom: 5px;">Mês Posterior</h3>
-            <table>
-                <thead><tr><th style="width:12%;">Data</th><th style="width:48%;">Descrição / Conta</th><th style="width:12%;">Categoria</th><th style="width:10%;">Tipo</th><th style="width:10%;">Valor</th><th style="width:8%;">Status</th></tr></thead>
-                <tbody id="tbMesPosterior"></tbody>
-            </table>
-        </div>
-    </div>
-
-    <div id="abaConfig" class="painel-branco aba-conteudo" style="display: none;">
-        <h2>⚙️ Configurações do Sistema</h2>
-        <div class="config-grid">
-            <div>
-                <h3>🏦 Contas / Bancos</h3>
-                <ul class="lista-itens" id="listaContasConfig"></ul>
-                <div style="display: flex; gap: 10px;"><input type="text" id="novaContaInput" placeholder="Nova conta..."><button class="btn-acao-topo" onclick="addConfig('conta')">Adicionar</button></div>
+        <div id="abaRelatorios" class="painel-branco aba-conteudo" style="display: none;">
+            <h2>📈 Resumo Financeiro por Categoria</h2>
+            <div class="filtros-area" style="display: flex; gap: 15px; max-width: 500px;" data-html2canvas-ignore>
+                <div style="flex: 1;"><label>Período De:</label><input type="date" id="rDataInicio" onchange="gerarRelatorios()"></div>
+                <div style="flex: 1;"><label>Até:</label><input type="date" id="rDataFim" onchange="gerarRelatorios()"></div>
             </div>
-            <div>
-                <h3>📁 Categorias</h3>
-                <ul class="lista-itens" id="listaCatConfig"></ul>
-                <div style="display: flex; gap: 10px;"><input type="text" id="novaCatInput" placeholder="Nova categoria..."><button class="btn-acao-topo" onclick="addConfig('cat')">Adicionar</button></div>
+            <div class="relatorios-grid">
+                <div class="rel-box"><h3 style="color: #27ae60; font-size: 15px;">✅ Entradas (Efetuadas)</h3><div id="relCreditoEfetuado"></div></div>
+                <div class="rel-box"><h3 style="color: #e74c3c; font-size: 15px;">✅ Saídas (Efetuadas)</h3><div id="relDebitoEfetuado"></div></div>
+                <div class="rel-box"><h3 style="color: #f39c12; font-size: 15px;">⏳ A Receber (A Vencer)</h3><div id="relCreditoVencer"></div></div>
+                <div class="rel-box"><h3 style="color: #c0392b; font-size: 15px;">⏳ A Pagar (A Vencer)</h3><div id="relDebitoVencer"></div></div>
             </div>
-            <div>
-                <h3>📌 Status</h3>
-                <ul class="lista-itens" id="listaStatusConfig"></ul>
-                <div style="display: flex; gap: 10px;"><input type="text" id="novoStatusInput" placeholder="Novo status..."><button class="btn-acao-topo" onclick="addConfig('status')">Adicionar</button></div>
-            </div>
+        </div>
 
-            <div class="backup-area">
-                <h3 style="color: #16a085; margin-top: 0;">💾 Segurança de Dados (Backup e Restauração)</h3>
-                <p style="margin: 5px 0 0 0; font-size: 13px; color: #555;">Faça o download de um backup regularmente para garantir que você nunca perca seus dados.</p>
-                <div class="backup-flex">
-                    <button class="btn-acao-topo" style="background: #16a085; font-size: 14px; padding: 10px 15px;" onclick="gerarBackup()">
-                        📥 Baixar Backup
-                    </button>
-                    <div style="display: flex; align-items: center; gap: 10px; background: white; padding: 6px 12px; border-radius: 4px; border: 1px solid #bdc3c7;">
-                        <input type="file" id="arquivoBackup" accept=".json" style="border: none; padding: 0; width: 220px; font-size: 12px;">
-                        <button class="btn-acao-topo" style="background: #e67e22; padding: 6px 12px;" onclick="restaurarBackup()">📤 Restaurar Nuvem</button>
+        <div id="abaMensal" class="painel-branco aba-conteudo" style="display: none;">
+            <h2>📅 Visão Mensal</h2>
+            <div class="sub-navbar">
+                <button id="btnSubAtual" class="sub-aba-btn sub-aba-ativa" onclick="mudarSubAbaMes('Atual')">📍 Mês Atual</button>
+                <button id="btnSubAnterior" class="sub-aba-btn" onclick="mudarSubAbaMes('Anterior')">⬅️ Mês Anterior</button>
+                <button id="btnSubPosterior" class="sub-aba-btn" onclick="mudarSubAbaMes('Posterior')">➡️ Mês Posterior</button>
+            </div>
+            <div id="subMesAnterior" style="display: none;"><table><tbody id="tbMesAnterior"></tbody></table></div>
+            <div id="subMesAtual"><table><tbody id="tbMesAtual"></tbody></table></div>
+            <div id="subMesPosterior" style="display: none;"><table><tbody id="tbMesPosterior"></tbody></table></div>
+        </div>
+
+        <div id="abaConfig" class="painel-branco aba-conteudo" style="display: none;">
+            <h2>⚙️ Configurações</h2>
+            <div class="config-grid">
+                <div><h3>🏦 Contas</h3><ul class="lista-itens" id="listaContasConfig"></ul><div style="display:flex; gap:10px;"><input type="text" id="novaContaInput" placeholder="Nova conta..."><button class="btn-acao-topo" onclick="addConfig('conta')">Adicionar</button></div></div>
+                <div><h3>📁 Categorias</h3><ul class="lista-itens" id="listaCatConfig"></ul><div style="display:flex; gap:10px;"><input type="text" id="novaCatInput" placeholder="Nova categoria..."><button class="btn-acao-topo" onclick="addConfig('cat')">Adicionar</button></div></div>
+                <div><h3>📌 Status</h3><ul class="lista-itens" id="listaStatusConfig"></ul><div style="display:flex; gap:10px;"><input type="text" id="novoStatusInput" placeholder="Novo status..."><button class="btn-acao-topo" onclick="addConfig('status')">Adicionar</button></div></div>
+
+                <div class="admin-area admin-req">
+                    <h3 style="color: #d35400; margin-top: 0;">🛡️ Gestão de Usuários (Apenas Administrador)</h3>
+                    
+                    <div style="background: white; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+                        <p style="margin-top:0; font-size:13px; font-weight:bold;">➕ Criar Nova Conta de Acesso:</p>
+                        <div style="display:flex; gap:10px;">
+                            <input type="text" id="novoUserCpf" placeholder="CPF do Novo Usuário" style="flex:2; font-size:12px; padding:6px;">
+                            <input type="password" id="novoUserSenha" placeholder="Senha" style="flex:2; font-size:12px; padding:6px;">
+                            <select id="novoUserPerfil" style="flex:1; font-size:12px; padding:6px;">
+                                <option value="Observador">Observador</option>
+                                <option value="Financeiro">Financeiro</option>
+                                <option value="Administrador">Administrador</option>
+                            </select>
+                            <button class="btn-acao-topo" style="background:#27ae60;" onclick="criarNovoUsuarioPeloAdmin()">Criar Conta</button>
+                        </div>
+                    </div>
+
+                    <table class="tabela-simples" style="width: 100%; background: white;">
+                        <thead><tr><th style="text-align:left;">CPF do Usuário</th><th style="text-align:left;">Perfil de Acesso</th></tr></thead>
+                        <tbody id="tabelaUsuariosAdmin"></tbody>
+                    </table>
+                </div>
+
+                <div class="admin-area admin-req" style="background: #e8ebef; border-color: #d1d8e0;">
+                    <h3 style="color: #2c3e50; margin-top: 0;">📋 Logs do Sistema (Últimas 50 ações)</h3>
+                    <div style="max-height: 200px; overflow-y: auto;">
+                        <table class="tabela-simples" style="width: 100%; background: white;">
+                            <thead><tr><th style="text-align:left;">Data/Hora</th><th style="text-align:left;">Usuário (CPF)</th><th style="text-align:left;">Ação</th><th style="text-align:left;">Detalhes</th></tr></thead>
+                            <tbody id="tabelaLogsAdmin"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -288,7 +259,7 @@
 </div>
 
 <script>
-    // --- INICIALIZAÇÃO FIREBASE CONFIGURADA ---
+    // --- FIREBASE CONFIG ---
     const firebaseConfig = {
       apiKey: "AIzaSyDpBk2nBKHpRVn8AYlOOkxKLkiEdBN7xyE",
       authDomain: "controle-construtora.firebaseapp.com",
@@ -297,111 +268,252 @@
       messagingSenderId: "606324974662",
       appId: "1:606324974662:web:3f2333618d39b04b651647"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    const auth = firebase.auth();
 
-    // Variáveis mantidas em memória
+    // VARIÁVEIS GLOBAIS
     let lancamentos = [];
     let categorias = ["Alimentação", "Moradia", "Transporte", "Lazer", "Saúde", "Outros", "Salário", "Impostos"];
     let statusLista = ["A Vencer", "Efetuada"];
     let contasLista = ["Carteira", "Conta Corrente", "Poupança"];
-    let dadosFiltradosGlobais = [];
+    
+    let userAutenticado = null;
+    let perfilUsuario = 'Observador'; 
 
-    // --- CARREGAMENTO INICIAL EM TEMPO REAL (Ouvintes do Firestore) ---
-    db.collection("config").doc("listas").onSnapshot((doc) => {
-        if (doc.exists) {
-            let dados = doc.data();
-            if(dados.categorias) categorias = dados.categorias;
-            if(dados.statusLista) statusLista = dados.statusLista;
-            if(dados.contasLista) contasLista = dados.contasLista;
+    // --- HELPER CPF ---
+    function formatarCPFText(cpfStr) {
+        if(!cpfStr) return "";
+        let limpo = cpfStr.replace(/\D/g, '');
+        if(limpo.length === 11) return limpo.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+        return cpfStr;
+    }
+
+    // --- CHECK DE PRIMEIRA EXECUÇÃO ---
+    db.collection("usuarios").limit(1).get().then(snap => {
+        if(snap.empty) {
+            document.getElementById('btnRegistrarPrimeiro').style.display = 'block';
+            document.getElementById('btnEntrar').style.display = 'none';
         }
-        carregarListas();
-        atualizarTela();
     });
 
-    db.collection("lancamentos").onSnapshot((querySnapshot) => {
-        lancamentos = [];
-        querySnapshot.forEach((doc) => {
-            lancamentos.push(doc.data());
+    // --- SISTEMA DE AUTENTICAÇÃO ---
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            document.getElementById('telaLogin').style.display = 'none';
+            document.getElementById('appLogado').style.display = 'block';
+            
+            // O e-mail falso é "12345678900@sistema.local". Nós pegamos apenas a parte do CPF.
+            let cpfExtraido = user.email.split('@')[0];
+            document.getElementById('lblUsuario').innerText = formatarCPFText(cpfExtraido);
+            
+            userAutenticado = user;
+            carregarPerfilUsuario(user);
+        } else {
+            document.getElementById('telaLogin').style.display = 'flex';
+            document.getElementById('appLogado').style.display = 'none';
+            userAutenticado = null;
+        }
+    });
+
+    function entrar() {
+        let cpf = document.getElementById('cpfAuth').value.replace(/\D/g, '');
+        const s = document.getElementById('senhaAuth').value;
+        if(cpf.length !== 11) return document.getElementById('loginMsg').innerText = "Erro: CPF deve conter exatos 11 números.";
+        
+        const emailFake = cpf + "@sistema.local";
+        auth.signInWithEmailAndPassword(emailFake, s).catch(err => document.getElementById('loginMsg').innerText = "Erro: CPF ou senha incorretos.");
+    }
+
+    function registrarPrimeiroAdmin() {
+        let cpf = document.getElementById('cpfAuth').value.replace(/\D/g, '');
+        const s = document.getElementById('senhaAuth').value;
+        
+        if(cpf.length !== 11) return document.getElementById('loginMsg').innerText = "Erro: CPF deve conter exatos 11 números.";
+        if(s.length < 6) return document.getElementById('loginMsg').innerText = "A senha deve ter no mínimo 6 caracteres.";
+        
+        const emailFake = cpf + "@sistema.local";
+        auth.createUserWithEmailAndPassword(emailFake, s).then(cred => {
+            db.collection("usuarios").doc(cred.user.uid).set({ cpf: cpf, perfil: "Administrador" });
+            alert("Administrador Mestre criado com sucesso! O sistema de criação de contas públicas foi desativado.");
+        }).catch(err => document.getElementById('loginMsg').innerText = "Erro: " + err.message);
+    }
+
+    function sair() { auth.signOut(); location.reload(); }
+
+    function carregarPerfilUsuario(user) {
+        db.collection("usuarios").doc(user.uid).onSnapshot(doc => {
+            if (doc.exists) {
+                perfilUsuario = doc.data().perfil;
+                document.getElementById('lblPerfil').innerText = perfilUsuario;
+                aplicarRestricoesUI();
+            }
         });
-        atualizarTela();
-        if(document.getElementById('abaMensal').style.display === 'block') gerarVisaoMensal();
-        if(document.getElementById('abaRelatorios').style.display === 'block') gerarRelatorios();
-    });
+        iniciarOuvintesDeDados();
+    }
 
-    function salvarConfigNaNuvem() {
-        db.collection("config").doc("listas").set({
-            categorias: categorias,
-            statusLista: statusLista,
-            contasLista: contasLista
+    function aplicarRestricoesUI() {
+        document.querySelectorAll('.admin-req, .fin-req, .config-req').forEach(el => el.style.display = 'none');
+        document.getElementById('painelCadastro').style.display = 'none';
+        document.getElementById('areaRelatorioPDF').style.width = '100%';
+
+        if (perfilUsuario === 'Administrador') {
+            document.querySelectorAll('.admin-req, .fin-req, .config-req').forEach(el => el.style.display = '');
+            document.getElementById('painelCadastro').style.display = 'block';
+            document.getElementById('areaRelatorioPDF').style.width = '78%';
+        } 
+        else if (perfilUsuario === 'Financeiro') {
+            document.querySelectorAll('.fin-req, .config-req').forEach(el => el.style.display = '');
+            document.getElementById('painelCadastro').style.display = 'block';
+            document.getElementById('areaRelatorioPDF').style.width = '78%';
+        }
+        atualizarTela(); 
+    }
+
+    // --- CRIAÇÃO DE USUÁRIOS PELO ADMIN ---
+    function criarNovoUsuarioPeloAdmin() {
+        let cpf = document.getElementById('novoUserCpf').value.replace(/\D/g, '');
+        const s = document.getElementById('novoUserSenha').value;
+        const p = document.getElementById('novoUserPerfil').value;
+
+        if(cpf.length !== 11 || s.length < 6) return alert("Preencha um CPF válido (11 dígitos) e uma senha de no mínimo 6 caracteres.");
+
+        const emailFake = cpf + "@sistema.local";
+
+        let appSecundario;
+        if (firebase.apps.length === 1) { appSecundario = firebase.initializeApp(firebaseConfig, "AppSecundario"); } 
+        else { appSecundario = firebase.app("AppSecundario"); }
+
+        appSecundario.auth().createUserWithEmailAndPassword(emailFake, s).then(cred => {
+            db.collection("usuarios").doc(cred.user.uid).set({ cpf: cpf, perfil: p });
+            appSecundario.auth().signOut(); 
+            
+            registrarLog("CRIOU_USUARIO", `Criou acesso para o CPF: ${formatarCPFText(cpf)} (${p})`);
+            alert(`Conta criada com sucesso!\n\nCPF: ${formatarCPFText(cpf)}\nPerfil: ${p}`);
+            
+            document.getElementById('novoUserCpf').value = "";
+            document.getElementById('novoUserSenha').value = "";
+        }).catch(err => {
+            if(err.code === 'auth/email-already-in-use') alert("Erro: Esse CPF já possui cadastro no sistema.");
+            else alert("Erro ao criar usuário: " + err.message);
         });
     }
 
-    // --- NAVEGAÇÃO ---
+    // --- SISTEMA DE LOGS ---
+    function registrarLog(acao, detalhes) {
+        if(!userAutenticado) return;
+        let cpfLog = userAutenticado.email.split('@')[0];
+        db.collection("logs").add({ dataHora: new Date().toISOString(), usuario: formatarCPFText(cpfLog), acao: acao, detalhes: detalhes });
+    }
+
+    // --- OUVINTES DO BANCO DE DADOS ---
+    function iniciarOuvintesDeDados() {
+        db.collection("config").doc("listas").onSnapshot(doc => {
+            if (doc.exists) { let d = doc.data(); if(d.categorias) categorias = d.categorias; if(d.statusLista) statusLista = d.statusLista; if(d.contasLista) contasLista = d.contasLista; }
+            carregarListas(); atualizarTela();
+        });
+
+        db.collection("lancamentos").onSnapshot(snap => {
+            lancamentos = []; snap.forEach(doc => lancamentos.push(doc.data()));
+            atualizarTela();
+            if(document.getElementById('abaMensal').style.display === 'block') gerarVisaoMensal();
+            if(document.getElementById('abaRelatorios').style.display === 'block') gerarRelatorios();
+        });
+
+        if(perfilUsuario === 'Administrador') {
+            db.collection("usuarios").onSnapshot(snap => {
+                let h = "";
+                snap.forEach(doc => {
+                    let u = doc.data();
+                    h += `<tr><td>${formatarCPFText(u.cpf)}</td><td>
+                        <select onchange="alterarPerfil('${doc.id}', this.value)" style="padding:2px; font-size:12px;">
+                            <option value="Observador" ${u.perfil==='Observador'?'selected':''}>Observador</option>
+                            <option value="Financeiro" ${u.perfil==='Financeiro'?'selected':''}>Financeiro</option>
+                            <option value="Administrador" ${u.perfil==='Administrador'?'selected':''}>Administrador</option>
+                        </select>
+                    </td></tr>`;
+                });
+                document.getElementById('tabelaUsuariosAdmin').innerHTML = h;
+            });
+
+            db.collection("logs").orderBy("dataHora", "desc").limit(50).onSnapshot(snap => {
+                let h = "";
+                snap.forEach(doc => {
+                    let l = doc.data();
+                    let dataFormat = new Date(l.dataHora).toLocaleString('pt-BR');
+                    h += `<tr><td>${dataFormat}</td><td>${l.usuario}</td><td><span style="background:#e8f8f5; color:#16a085; padding:2px 5px; border-radius:3px; font-weight:bold;">${l.acao}</span></td><td>${l.detalhes}</td></tr>`;
+                });
+                document.getElementById('tabelaLogsAdmin').innerHTML = h;
+            });
+        }
+    }
+
+    function alterarPerfil(uid, novoPerfil) {
+        if(confirm("Alterar o perfil deste usuário?")) {
+            db.collection("usuarios").doc(uid).update({ perfil: novoPerfil });
+            registrarLog("ALTEROU_PERFIL", `Mudou perfil interno do registro ${uid} para ${novoPerfil}`);
+        }
+    }
+
+    // --- FUNÇÕES MANTIDAS E ADAPTADAS ---
+    function salvarConfigNaNuvem() {
+        if(perfilUsuario === 'Observador') return;
+        db.collection("config").doc("listas").set({ categorias: categorias, statusLista: statusLista, contasLista: contasLista });
+    }
+
     function mudarAba(abaId) {
         document.querySelectorAll('.aba-conteudo').forEach(el => el.style.display = 'none');
         document.querySelectorAll('.aba-btn').forEach(el => el.classList.remove('aba-ativa'));
         let painel = document.getElementById(abaId === 'dashboard' ? 'abaDashboard' : (abaId === 'relatorios' ? 'abaRelatorios' : (abaId === 'mensal' ? 'abaMensal' : 'abaConfig')));
         painel.style.display = abaId === 'dashboard' ? 'flex' : 'block';
         document.getElementById('btnAba' + abaId.charAt(0).toUpperCase() + abaId.slice(1)).classList.add('aba-ativa');
-
         if(abaId === 'relatorios') gerarRelatorios();
         if(abaId === 'mensal') { mudarSubAbaMes('Atual'); gerarVisaoMensal(); }
     }
-
-    function mudarSubAbaMes(subAba) {
-        document.getElementById("subMesAnterior").style.display = "none"; document.getElementById("subMesAtual").style.display = "none"; document.getElementById("subMesPosterior").style.display = "none";
-        document.querySelectorAll('.sub-aba-btn').forEach(el => el.classList.remove('sub-aba-ativa'));
-        document.getElementById("subMes" + subAba).style.display = "block"; document.getElementById("btnSub" + subAba).classList.add('sub-aba-ativa');
-    }
-
-    function formata(valor) { return valor.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}); }
+    function mudarSubAbaMes(s) { document.querySelectorAll('#subMesAnterior, #subMesAtual, #subMesPosterior').forEach(el=>el.style.display='none'); document.querySelectorAll('.sub-aba-btn').forEach(el=>el.classList.remove('sub-aba-ativa')); document.getElementById("subMes"+s).style.display="block"; document.getElementById("btnSub"+s).classList.add('sub-aba-ativa'); }
+    function formata(v) { return v.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}); }
     function formataData(d) { return d.split('-').reverse().join('/'); }
 
-    // --- CONFIGURAÇÕES E LISTAS ---
     function carregarListas() {
         document.getElementById("cadCat").innerHTML = categorias.map(c => `<option value="${c}">${c}</option>`).join('');
-        document.getElementById("fCat").innerHTML = '<option value="Todos">Todas as Categorias</option>' + categorias.map(c => `<option value="${c}">${c}</option>`).join('');
+        document.getElementById("fCat").innerHTML = '<option value="Todos">Todas</option>' + categorias.map(c => `<option value="${c}">${c}</option>`).join('');
         document.getElementById("cadStatus").innerHTML = statusLista.map(s => `<option value="${s}">${s}</option>`).join('');
-        document.getElementById("fStatus").innerHTML = '<option value="Todos">Todos os Status</option>' + statusLista.map(s => `<option value="${s}">${s}</option>`).join('');
+        document.getElementById("fStatus").innerHTML = '<option value="Todos">Todos</option>' + statusLista.map(s => `<option value="${s}">${s}</option>`).join('');
         document.getElementById("cadConta").innerHTML = contasLista.map(c => `<option value="${c}">${c}</option>`).join('');
-        document.getElementById("fConta").innerHTML = '<option value="Todas">Todas as Contas</option>' + contasLista.map(c => `<option value="${c}">${c}</option>`).join('');
+        document.getElementById("fConta").innerHTML = '<option value="Todas">Todas</option>' + contasLista.map(c => `<option value="${c}">${c}</option>`).join('');
         document.getElementById("listaCatConfig").innerHTML = categorias.map((c, i) => `<li>${c} <button onclick="remConfig('cat', ${i})">Excluir</button></li>`).join('');
         document.getElementById("listaStatusConfig").innerHTML = statusLista.map((s, i) => `<li>${s} <button onclick="remConfig('status', ${i})">Excluir</button></li>`).join('');
         document.getElementById("listaContasConfig").innerHTML = contasLista.map((c, i) => `<li>${c} <button onclick="remConfig('conta', ${i})">Excluir</button></li>`).join('');
     }
 
     function addConfig(t) {
+        if(perfilUsuario === 'Observador') return alert("Sem permissão");
         let idInp = t==='cat'?"novaCatInput":(t==='status'?"novoStatusInput":"novaContaInput");
         let inp = document.getElementById(idInp); let v = inp.value.trim();
         if(v) {
             if(t==='cat' && !categorias.includes(v)) categorias.push(v);
             if(t==='status' && !statusLista.includes(v)) statusLista.push(v);
             if(t==='conta' && !contasLista.includes(v)) contasLista.push(v);
-            inp.value = ""; 
-            salvarConfigNaNuvem();
+            inp.value = ""; salvarConfigNaNuvem();
+            registrarLog("ADC_CONFIG", `Adicionou ${t}: ${v}`);
         }
     }
-
     function remConfig(t, i) {
-        if(t==='cat') categorias.splice(i,1);
-        if(t==='status') statusLista.splice(i,1);
-        if(t==='conta') contasLista.splice(i,1);
+        if(perfilUsuario === 'Observador') return alert("Sem permissão");
+        let itemRemovido = "";
+        if(t==='cat') { itemRemovido = categorias[i]; categorias.splice(i,1); }
+        if(t==='status') { itemRemovido = statusLista[i]; statusLista.splice(i,1); }
+        if(t==='conta') { itemRemovido = contasLista[i]; contasLista.splice(i,1); }
         salvarConfigNaNuvem();
+        registrarLog("REM_CONFIG", `Removeu ${t}: ${itemRemovido}`);
     }
-
     function toggleOpcoesPagamento() {
-        let tipo = document.getElementById("cadPagamento").value;
-        let caixa = document.getElementById("caixaOpcoesPagamento");
-        let label = document.getElementById("labelOpcoesPagamento");
-        if (tipo === "Parcelado") { caixa.style.display = "block"; label.innerText = "Nº de Parcelas (Divide):"; } 
-        else if (tipo === "Recorrente") { caixa.style.display = "block"; label.innerText = "Meses projetados (Repete):"; } 
-        else { caixa.style.display = "none"; }
+        let t = document.getElementById("cadPagamento").value; let c = document.getElementById("caixaOpcoesPagamento"); let l = document.getElementById("labelOpcoesPagamento");
+        if (t === "Parcelado") { c.style.display = "block"; l.innerText = "Nº de Parcelas:"; } else if (t === "Recorrente") { c.style.display = "block"; l.innerText = "Meses projetados:"; } else { c.style.display = "none"; }
     }
 
-    // --- CRUD ---
     function adicionarLancamento() {
+        if(perfilUsuario === 'Observador') return alert("Sem permissão");
         const id = document.getElementById("editId").value;
         const d = document.getElementById("cadDesc").value, c = document.getElementById("cadCat").value;
         const contaRef = document.getElementById("cadConta").value || "Geral";
@@ -412,34 +524,30 @@
         if (!d || isNaN(v) || !dt) return alert("Preencha todos os campos obrigatórios!");
 
         if (id) {
-            db.collection("lancamentos").doc(id).update({
-                desc: d, categoria: c, conta: contaRef, valor: v, data: dt, tipo: t, status: st
-            });
+            db.collection("lancamentos").doc(id).update({ desc: d, categoria: c, conta: contaRef, valor: v, data: dt, tipo: t, status: st });
+            registrarLog("EDITOU", `Editou lançamento: ${d} | R$${v}`);
         } else if (pag === "Parcelado" || pag === "Recorrente") {
             const n = parseInt(document.getElementById("numRepeticoes").value);
             const valorCalculado = (pag === "Parcelado") ? (v / n) : v;
             let batch = db.batch();
-
             for (let i = 0; i < n; i++) {
                 let dataVenc = new Date(dt + "T00:00:00"); dataVenc.setMonth(dataVenc.getMonth() + i);
                 let descFinal = (pag === "Parcelado") ? `${d} (${i+1}/${n})` : d;
                 let novoId = (Date.now() + i).toString();
-                
-                let docRef = db.collection("lancamentos").doc(novoId);
-                batch.set(docRef, { id: novoId, desc: descFinal, categoria: c, conta: contaRef, valor: valorCalculado, data: dataVenc.toISOString().split('T')[0], tipo: t, status: st });
+                batch.set(db.collection("lancamentos").doc(novoId), { id: novoId, desc: descFinal, categoria: c, conta: contaRef, valor: valorCalculado, data: dataVenc.toISOString().split('T')[0], tipo: t, status: st });
             }
             batch.commit();
+            registrarLog("ADC_LOTE", `Adicionou lote (${pag}): ${d} | R$${v} total`);
         } else {
             let novoId = Date.now().toString();
-            db.collection("lancamentos").doc(novoId).set({
-                id: novoId, desc: d, categoria: c, conta: contaRef, valor: v, data: dt, tipo: t, status: st
-            });
+            db.collection("lancamentos").doc(novoId).set({ id: novoId, desc: d, categoria: c, conta: contaRef, valor: v, data: dt, tipo: t, status: st });
+            registrarLog("ADICIONOU", `Novo lançamento: ${d} | R$${v}`);
         }
-        
         limparFormulario(); 
     }
 
     function editar(id) {
+        if(perfilUsuario === 'Observador') return;
         const l = lancamentos.find(l => l.id == id);
         document.getElementById("editId").value = l.id; document.getElementById("cadDesc").value = l.desc;
         document.getElementById("cadCat").value = l.categoria; document.getElementById("cadConta").value = l.conta || contasLista[0];
@@ -450,18 +558,10 @@
         document.getElementById("btnSalvar").classList.add("btn-editando"); 
     }
 
-    // Função de Limpar Campos adaptada
     function limparFormulario() {
-        document.getElementById("editId").value = ""; 
-        document.getElementById("cadDesc").value = ""; 
-        document.getElementById("cadValor").value = "";
-        document.getElementById("cadData").value = "";
-        document.getElementById("cadPagamento").value = "À Vista"; toggleOpcoesPagamento();
-        document.getElementById("cadTipo").value = "Débito";
-        
-        document.getElementById("tituloCadastro").innerText = "💸 Registro"; 
-        document.getElementById("btnSalvar").innerText = "Registrar";
-        document.getElementById("btnSalvar").classList.remove("btn-editando"); 
+        document.getElementById("editId").value = ""; document.getElementById("cadDesc").value = ""; document.getElementById("cadValor").value = ""; document.getElementById("cadData").value = "";
+        document.getElementById("cadPagamento").value = "À Vista"; toggleOpcoesPagamento(); document.getElementById("cadTipo").value = "Débito";
+        document.getElementById("tituloCadastro").innerText = "💸 Registro"; document.getElementById("btnSalvar").innerText = "Registrar"; document.getElementById("btnSalvar").classList.remove("btn-editando"); 
     }
 
     function atualizarTela() {
@@ -473,65 +573,60 @@
         
         let tEnt = 0, tSai = 0; const hoje = new Date().toISOString().split('T')[0];
 
-        // Lógica de Filtro e Ordem Dinâmica
-        dadosFiltradosGlobais = lancamentos.filter(l => 
+        let dadosFiltradosGlobais = lancamentos.filter(l => 
             l.desc.toLowerCase().includes(fBusca) && (fTipo === "Todos" || l.tipo === fTipo) &&
             (fCat === "Todos" || l.categoria === fCat) &&  (fConta === "Todas" || l.conta === fConta) &&
             (fStatus === "Todos" || l.status === fStatus) && (!fIni || l.data >= fIni) && (!fFim || l.data <= fFim)
-        ).sort((a,b) => {
-            if (fOrdem === 'asc') return new Date(a.data) - new Date(b.data);
-            else return new Date(b.data) - new Date(a.data);
-        });
+        ).sort((a,b) => fOrdem === 'asc' ? new Date(a.data) - new Date(b.data) : new Date(b.data) - new Date(a.data));
 
         dadosFiltradosGlobais.forEach(l => {
             if (l.tipo === "Crédito") tEnt += l.valor; else tSai += l.valor;
             let isEfetuada = l.status.toLowerCase().includes("efetuada") || l.status.toLowerCase().includes("pago");
-            
-            // Lógica de Destaque
-            let isAtrasado = l.data < hoje && !isEfetuada;
-            let isHoje = l.data === hoje && !isEfetuada;
+            let isAtrasado = l.data < hoje && !isEfetuada; let isHoje = l.data === hoje && !isEfetuada;
             
             const tr = document.createElement("tr"); 
-            
-            let iconeData = "⏳";
-            if (isEfetuada) { iconeData = "✅"; }
-            else if (isAtrasado) { tr.className = "vencido"; iconeData = "🔴"; }
-            else if (isHoje) { tr.className = "vence-hoje"; iconeData = "⚠️"; }
+            let iconeData = isEfetuada ? "✅" : (isAtrasado ? "🔴" : (isHoje ? "⚠️" : "⏳"));
+            if (isAtrasado) tr.className = "vencido"; else if (isHoje) tr.className = "vence-hoje";
+
+            let selectStatus = perfilUsuario === 'Observador' ? l.status : `<select onchange="alterarStatus('${l.id}', this.value)" style="width: 100%; max-width: 100px; padding: 4px; font-size: 12px; border-radius: 4px;"><option value="${l.status}" selected>${l.status}</option>${statusLista.filter(s=>s!=l.status).map(s=>`<option value="${s}">${s}</option>`).join('')}</select>`;
+            let acoesHtml = perfilUsuario === 'Observador' ? '' : `<td style="text-align:center; white-space:nowrap;" data-html2canvas-ignore class="fin-req"><button class="btn-acao" onclick="editar('${l.id}')">✏️</button><button class="btn-acao" onclick="remover('${l.id}')">🗑️</button></td>`;
 
             tr.innerHTML = `
                 <td style="white-space:nowrap;"><strong>${iconeData} ${formataData(l.data)}</strong></td>
                 <td><strong>${l.desc}</strong><br><small style="color:#7f8c8d">📁 ${l.categoria} | 🏦 ${l.conta || "Geral"}</small></td>
                 <td style="color:${l.tipo==='Débito'?'#e74c3c':'#27ae60'};font-weight:bold">${formata(l.valor)}</td>
                 <td>${l.tipo}</td>
-                <td data-html2canvas-ignore><select onchange="alterarStatus('${l.id}', this.value)" style="width: 100%; max-width: 100px; padding: 4px; font-size: 12px; border-radius: 4px; border: 1px solid #ccc;">
-                    ${statusLista.map(s => `<option value="${s}" ${l.status === s ? 'selected' : ''}>${s}</option>`).join('')}
-                </select></td>
+                <td data-html2canvas-ignore>${selectStatus}</td>
                 <td style="display:none;" data-pdf-status>${l.status}</td>
-                <td style="text-align:center; white-space:nowrap;" data-html2canvas-ignore>
-                    <button class="btn-acao" onclick="editar('${l.id}')" title="Editar">✏️</button>
-                    <button class="btn-acao" onclick="remover('${l.id}')" title="Excluir">🗑️</button>
-                </td>`;
+                ${acoesHtml}`;
             tbody.appendChild(tr);
         });
         document.getElementById("resEntradas").innerText = formata(tEnt); document.getElementById("resSaidas").innerText = formata(tSai);
         document.getElementById("resSaldo").innerText = formata(tEnt - tSai); document.getElementById("resSaldo").style.color = (tEnt - tSai) >= 0 ? "#2980b9" : "#e74c3c";
+        
+        if(perfilUsuario === 'Observador') document.querySelectorAll('.fin-req').forEach(el => el.style.display = 'none');
     }
 
     function alterarStatus(id, st) { 
+        if(perfilUsuario === 'Observador') return;
         db.collection("lancamentos").doc(id.toString()).update({ status: st });
+        registrarLog("ALT_STATUS", `Mudou status do doc ${id} para ${st}`);
     }
     
     function remover(id) { 
+        if(perfilUsuario === 'Observador') return;
         if(confirm("Excluir definitivamente?")) { 
             db.collection("lancamentos").doc(id.toString()).delete();
+            registrarLog("EXCLUIU", `Excluiu lançamento ID: ${id}`);
         } 
     }
 
     function exportarCSV() {
         let csv = "Vencimento;Descrição;Conta;Categoria;Valor;Tipo;Status\n";
-        dadosFiltradosGlobais.forEach(l => { csv += `${formataData(l.data)};${l.desc};${l.conta || 'Geral'};${l.categoria};${l.valor.toFixed(2).replace('.',',')};${l.tipo};${l.status}\n`; });
+        lancamentos.forEach(l => { csv += `${formataData(l.data)};${l.desc};${l.conta || 'Geral'};${l.categoria};${l.valor.toFixed(2).replace('.',',')};${l.tipo};${l.status}\n`; });
         let link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
         link.download = `relatorio_financeiro_${new Date().toISOString().split('T')[0]}.csv`; link.click();
+        registrarLog("EXPORT_CSV", "Exportou planilha CSV.");
     }
 
     function exportarPDF() {
@@ -539,18 +634,10 @@
         document.getElementById('tituloPDF').style.display = 'block';
         document.querySelectorAll('td[data-pdf-status]').forEach(el => el.style.display = 'table-cell');
         document.querySelectorAll('td:has(select)').forEach(el => el.style.display = 'none');
-        
-        html2pdf().set({ 
-            margin: 10, 
-            filename: `relatorio_financeiro_${new Date().toISOString().split('T')[0]}.pdf`, 
-            image: { type: 'jpeg', quality: 0.98 }, 
-            html2canvas: { scale: 2, useCORS: true, letterRendering: true }, 
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } 
-        }).from(elemento).save().then(() => {
-            document.getElementById('tituloPDF').style.display = 'none'; 
-            document.querySelectorAll('td[data-pdf-status]').forEach(el => el.style.display = 'none'); 
-            document.querySelectorAll('td:has(select)').forEach(el => el.style.display = 'table-cell');
+        html2pdf().set({ margin: 10, filename: `rel_fin_${new Date().toISOString().split('T')[0]}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } }).from(elemento).save().then(() => {
+            document.getElementById('tituloPDF').style.display = 'none'; document.querySelectorAll('td[data-pdf-status]').forEach(el => el.style.display = 'none'); document.querySelectorAll('td:has(select)').forEach(el => el.style.display = 'table-cell');
         });
+        registrarLog("EXPORT_PDF", "Exportou arquivo PDF.");
     }
 
     function gerarRelatorios() {
@@ -564,83 +651,22 @@
             if(l.tipo === "Crédito" && !isEfetuada) totais.cv[cat] = (totais.cv[cat] || 0) + l.valor;
             if(l.tipo === "Débito" && !isEfetuada) totais.dv[cat] = (totais.dv[cat] || 0) + l.valor;
         });
-
-        const desenhar = (obj, idCont) => {
-            let html = "", soma = 0;
-            for(let c in obj) { html += `<div class="rel-linha"><span>${c}</span><span>${formata(obj[c])}</span></div>`; soma += obj[c]; }
-            if(html === "") html = "<p style='color:#999; font-size:13px;'>Sem registros no período.</p>"; else html += `<div class="rel-linha"><span>TOTAL</span><span>${formata(soma)}</span></div>`;
-            document.getElementById(idCont).innerHTML = html;
-        };
+        const desenhar = (obj, idCont) => { let html = "", soma = 0; for(let c in obj) { html += `<div class="rel-linha"><span>${c}</span><span>${formata(obj[c])}</span></div>`; soma += obj[c]; } if(html === "") html = "<p style='color:#999; font-size:13px;'>Sem registros.</p>"; else html += `<div class="rel-linha"><span>TOTAL</span><span>${formata(soma)}</span></div>`; document.getElementById(idCont).innerHTML = html; };
         desenhar(totais.ce, "relCreditoEfetuado"); desenhar(totais.de, "relDebitoEfetuado"); desenhar(totais.cv, "relCreditoVencer"); desenhar(totais.dv, "relDebitoVencer");
     }
 
     function gerarVisaoMensal() {
-        const dataAtual = new Date(); const ano = dataAtual.getFullYear(), mes = dataAtual.getMonth();
-        const nomesMeses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-        const getAnoMesStr = (a, m) => `${a}-${(m+1).toString().padStart(2,'0')}`;
-        
-        let mAnt = new Date(ano, mes - 1, 1); let mAntStr = getAnoMesStr(mAnt.getFullYear(), mAnt.getMonth());
-        let mAtuStr = getAnoMesStr(ano, mes);
-        let mPos = new Date(ano, mes + 1, 1); let mPosStr = getAnoMesStr(mPos.getFullYear(), mPos.getMonth());
-
-        document.getElementById("tituloMesAnterior").innerText = `Mês Anterior (${nomesMeses[mAnt.getMonth()]} ${mAnt.getFullYear()})`;
-        document.getElementById("tituloMesAtual").innerText = `Mês Atual (${nomesMeses[mes]} ${ano})`;
-        document.getElementById("tituloMesPosterior").innerText = `Mês Posterior (${nomesMeses[mPos.getMonth()]} ${mPos.getFullYear()})`;
-
-        const renderTb = (prefixo, idTb) => {
-            let html = lancamentos.filter(l => l.data.startsWith(prefixo)).sort((a,b) => new Date(a.data) - new Date(b.data)).map(l => `
-                <tr style="color: ${l.status.toLowerCase().includes('efetuada') ? '#7f8c8d' : '#333'};">
-                    <td><strong>${formataData(l.data)}</strong></td>
-                    <td><strong>${l.desc}</strong><br><small>🏦 ${l.conta || 'Geral'}</small></td>
-                    <td>${l.categoria}</td><td>${l.tipo}</td>
-                    <td style="color:${l.tipo==='Débito'?'#e74c3c':'#27ae60'};font-weight:bold;">${formata(l.valor)}</td><td>${l.status}</td>
-                </tr>
-            `).join('');
-            document.getElementById(idTb).innerHTML = html || '<tr><td colspan="6" style="text-align:center; color:#999;">Nenhum lançamento neste mês.</td></tr>';
-        };
-
-        renderTb(mAntStr, "tbMesAnterior"); renderTb(mAtuStr, "tbMesAtual"); renderTb(mPosStr, "tbMesPosterior");
+        const d = new Date(); const ano = d.getFullYear(), mes = d.getMonth();
+        const nm = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        const getStr = (a, m) => `${a}-${(m+1).toString().padStart(2,'0')}`;
+        let mAnt = new Date(ano, mes-1, 1), mPos = new Date(ano, mes+1, 1);
+        document.getElementById("tituloMesAnterior").innerText = `Mês Anterior (${nm[mAnt.getMonth()]} ${mAnt.getFullYear()})`;
+        document.getElementById("tituloMesAtual").innerText = `Mês Atual (${nm[mes]} ${ano})`;
+        document.getElementById("tituloMesPosterior").innerText = `Mês Posterior (${nm[mPos.getMonth()]} ${mPos.getFullYear()})`;
+        const rTb = (p, id) => { let h = lancamentos.filter(l => l.data.startsWith(p)).sort((a,b) => new Date(a.data) - new Date(b.data)).map(l => `<tr style="color: ${l.status.toLowerCase().includes('efetuada') ? '#7f8c8d' : '#333'};"><td><strong>${formataData(l.data)}</strong></td><td><strong>${l.desc}</strong><br><small>🏦 ${l.conta || 'Geral'}</small></td><td>${l.categoria}</td><td>${l.tipo}</td><td style="color:${l.tipo==='Débito'?'#e74c3c':'#27ae60'};font-weight:bold;">${formata(l.valor)}</td><td>${l.status}</td></tr>`).join(''); document.getElementById(id).innerHTML = h || '<tr><td colspan="6" style="text-align:center; color:#999;">Vazio</td></tr>'; };
+        rTb(getStr(mAnt.getFullYear(), mAnt.getMonth()), "tbMesAnterior"); rTb(getStr(ano, mes), "tbMesAtual"); rTb(getStr(mPos.getFullYear(), mPos.getMonth()), "tbMesPosterior");
     }
 
-    // --- BACKUP E RESTAURAÇÃO (Adaptados para a Nuvem) ---
-    function gerarBackup() {
-        const backupData = { dados: lancamentos, categorias: categorias, status: statusLista, contas: contasLista };
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
-        const downloadAnchorNode = document.createElement('a'); downloadAnchorNode.setAttribute("href", dataStr); downloadAnchorNode.setAttribute("download", `backup_financas_${new Date().toISOString().split('T')[0]}.json`); document.body.appendChild(downloadAnchorNode); downloadAnchorNode.click(); downloadAnchorNode.remove();
-    }
-
-    function restaurarBackup() {
-        const fileInput = document.getElementById('arquivoBackup'); const file = fileInput.files[0];
-        if (!file) return alert("Por favor, selecione o seu arquivo de backup (.json) primeiro!");
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                const backup = JSON.parse(e.target.result);
-                if (backup.dados && backup.categorias && backup.status && backup.contas) {
-                    if(confirm("ATENÇÃO: A restauração enviará os dados do arquivo para a nuvem. Deseja continuar?")) {
-                        
-                        db.collection("config").doc("listas").set({
-                            categorias: backup.categorias,
-                            statusLista: backup.status,
-                            contasLista: backup.contas
-                        });
-                        
-                        let batch = db.batch();
-                        backup.dados.forEach(l => {
-                            let docRef = db.collection("lancamentos").doc(l.id.toString());
-                            batch.set(docRef, l);
-                        });
-                        batch.commit().then(() => {
-                            alert("Backup restaurado e sincronizado com a nuvem com sucesso!");
-                        });
-                    }
-                } else { alert("Erro: O arquivo selecionado não é um backup válido deste sistema."); }
-            } catch (error) { alert("Erro: Ocorreu um problema ao ler o arquivo de backup. Ele pode estar corrompido."); }
-        };
-        reader.readAsText(file);
-    }
-
-    window.onload = () => { carregarListas(); atualizarTela(); };
 </script>
 
 </body>
