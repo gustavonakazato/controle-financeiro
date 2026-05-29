@@ -266,7 +266,7 @@
 </div>
 
 <script>
-    // --- INICIALIZAÇÃO FIREBASE CONFIGURADA ---
+    // --- INICIALIZAÇÃO FIREBASE (Com suas chaves) ---
     const firebaseConfig = {
       apiKey: "AIzaSyDpBk2nBKHpRVn8AYlOOkxKLkiEdBN7xyE",
       authDomain: "controle-construtora.firebaseapp.com",
@@ -286,7 +286,7 @@
     let contasLista = ["Carteira", "Conta Corrente", "Poupança"];
     let dadosFiltradosGlobais = [];
 
-    // --- CARREGAMENTO INICIAL EM TEMPO REAL (Ouvintes do Firestore) ---
+    // --- CARREGAMENTO INICIAL EM TEMPO REAL ---
     db.collection("config").doc("listas").onSnapshot((doc) => {
         if (doc.exists) {
             let dados = doc.data();
@@ -504,4 +504,93 @@
         const ini = document.getElementById("rDataInicio").value, fim = document.getElementById("rDataFim").value;
         let totais = { ce: {}, de: {}, cv: {}, dv: {} };
         lancamentos.filter(l => (!ini || l.data >= ini) && (!fim || l.data <= fim)).forEach(l => {
-            let isEfetuada = l.status.toLowerCase().includes("efetuada") || l.status.toLowerCase().includes("pago
+            let isEfetuada = l.status.toLowerCase().includes("efetuada") || l.status.toLowerCase().includes("pago");
+            let cat = l.categoria;
+            if(l.tipo === "Crédito" && isEfetuada) totais.ce[cat] = (totais.ce[cat] || 0) + l.valor;
+            if(l.tipo === "Débito" && isEfetuada) totais.de[cat] = (totais.de[cat] || 0) + l.valor;
+            if(l.tipo === "Crédito" && !isEfetuada) totais.cv[cat] = (totais.cv[cat] || 0) + l.valor;
+            if(l.tipo === "Débito" && !isEfetuada) totais.dv[cat] = (totais.dv[cat] || 0) + l.valor;
+        });
+
+        const desenhar = (obj, idCont) => {
+            let html = "", soma = 0;
+            for(let c in obj) { html += `<div class="rel-linha"><span>${c}</span><span>${formata(obj[c])}</span></div>`; soma += obj[c]; }
+            if(html === "") html = "<p style='color:#999; font-size:13px;'>Sem registros no período.</p>"; else html += `<div class="rel-linha"><span>TOTAL</span><span>${formata(soma)}</span></div>`;
+            document.getElementById(idCont).innerHTML = html;
+        };
+        desenhar(totais.ce, "relCreditoEfetuado"); desenhar(totais.de, "relDebitoEfetuado"); desenhar(totais.cv, "relCreditoVencer"); desenhar(totais.dv, "relDebitoVencer");
+    }
+
+    function gerarVisaoMensal() {
+        const dataAtual = new Date(); const ano = dataAtual.getFullYear(), mes = dataAtual.getMonth();
+        const nomesMeses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        const getAnoMesStr = (a, m) => `${a}-${(m+1).toString().padStart(2,'0')}`;
+        
+        let mAnt = new Date(ano, mes - 1, 1); let mAntStr = getAnoMesStr(mAnt.getFullYear(), mAnt.getMonth());
+        let mAtuStr = getAnoMesStr(ano, mes);
+        let mPos = new Date(ano, mes + 1, 1); let mPosStr = getAnoMesStr(mPos.getFullYear(), mPos.getMonth());
+
+        document.getElementById("tituloMesAnterior").innerText = `Mês Anterior (${nomesMeses[mAnt.getMonth()]} ${mAnt.getFullYear()})`;
+        document.getElementById("tituloMesAtual").innerText = `Mês Atual (${nomesMeses[mes]} ${ano})`;
+        document.getElementById("tituloMesPosterior").innerText = `Mês Posterior (${nomesMeses[mPos.getMonth()]} ${mPos.getFullYear()})`;
+
+        const renderTb = (prefixo, idTb) => {
+            let html = lancamentos.filter(l => l.data.startsWith(prefixo)).sort((a,b) => new Date(a.data) - new Date(b.data)).map(l => `
+                <tr style="color: ${l.status.toLowerCase().includes('efetuada') ? '#7f8c8d' : '#333'};">
+                    <td><strong>${formataData(l.data)}</strong></td>
+                    <td><strong>${l.desc}</strong><br><small>🏦 ${l.conta || 'Geral'}</small></td>
+                    <td>${l.categoria}</td><td>${l.tipo}</td>
+                    <td style="color:${l.tipo==='Débito'?'#e74c3c':'#27ae60'};font-weight:bold;">${formata(l.valor)}</td><td>${l.status}</td>
+                </tr>
+            `).join('');
+            document.getElementById(idTb).innerHTML = html || '<tr><td colspan="6" style="text-align:center; color:#999;">Nenhum lançamento neste mês.</td></tr>';
+        };
+
+        renderTb(mAntStr, "tbMesAnterior"); renderTb(mAtuStr, "tbMesAtual"); renderTb(mPosStr, "tbMesPosterior");
+    }
+
+    // --- BACKUP E RESTAURAÇÃO (Adaptados para a Nuvem) ---
+    function gerarBackup() {
+        const backupData = { dados: lancamentos, categorias: categorias, status: statusLista, contas: contasLista };
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+        const downloadAnchorNode = document.createElement('a'); downloadAnchorNode.setAttribute("href", dataStr); downloadAnchorNode.setAttribute("download", `backup_financas_${new Date().toISOString().split('T')[0]}.json`); document.body.appendChild(downloadAnchorNode); downloadAnchorNode.click(); downloadAnchorNode.remove();
+    }
+
+    function restaurarBackup() {
+        const fileInput = document.getElementById('arquivoBackup'); const file = fileInput.files[0];
+        if (!file) return alert("Por favor, selecione o seu arquivo de backup (.json) primeiro!");
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const backup = JSON.parse(e.target.result);
+                if (backup.dados && backup.categorias && backup.status && backup.contas) {
+                    if(confirm("ATENÇÃO: A restauração enviará os dados do arquivo para a nuvem. Deseja continuar?")) {
+                        
+                        // Restaura as configurações
+                        db.collection("config").doc("listas").set({
+                            categorias: backup.categorias,
+                            statusLista: backup.status,
+                            contasLista: backup.contas
+                        });
+                        
+                        // Restaura os lançamentos (usando Batch para performance)
+                        let batch = db.batch();
+                        backup.dados.forEach(l => {
+                            let docRef = db.collection("lancamentos").doc(l.id.toString());
+                            batch.set(docRef, l);
+                        });
+                        batch.commit().then(() => {
+                            alert("Backup restaurado e sincronizado com a nuvem com sucesso!");
+                        });
+                    }
+                } else { alert("Erro: O arquivo selecionado não é um backup válido deste sistema."); }
+            } catch (error) { alert("Erro: Ocorreu um problema ao ler o arquivo de backup. Ele pode estar corrompido."); }
+        };
+        reader.readAsText(file);
+    }
+
+    window.onload = () => { carregarListas(); atualizarTela(); };
+</script>
+
+</body>
+</html>
