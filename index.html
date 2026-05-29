@@ -2,6 +2,8 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
     <title>Morarbem - Controle Financeiro</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -14,14 +16,13 @@
         body { font-family: 'Segoe UI', sans-serif; background-color: #e9ecef; color: #333; padding: 0; margin: 0; }
         
         /* TELA DE LOGIN APRIMORADA */
-        #telaLogin { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #2c3e50; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
+        #telaLogin { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #2c3e50; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; padding: 20px; box-sizing: border-box; }
         
-        /* TÍTULO DA EMPRESA */
         .titulo-empresa { color: white; text-align: center; margin-bottom: 40px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); line-height: 1.3; }
         .titulo-empresa .menor { font-size: 22px; font-weight: normal; color: #bdc3c7; }
         .titulo-empresa .maior { font-size: 32px; font-weight: bold; color: #27ae60; text-transform: uppercase; }
 
-        .login-box { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); width: 100%; max-width: 380px; text-align: center; }
+        .login-box { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); width: 100%; max-width: 380px; text-align: center; box-sizing: border-box; }
         .login-box h2 { color: #2c3e50; margin-top: 0; }
         .login-box input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 15px; }
         .login-box button { width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-bottom: 10px; font-size: 15px; }
@@ -31,50 +32,54 @@
         #loginMsg { color: #e74c3c; font-size: 14px; margin-bottom: 10px; height: 15px; font-weight: bold; }
 
         /* HEADER LOGADO */
-        .header-top { background: #1a252f; color: white; padding: 5px 20px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+        .header-top { background: #1a252f; color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; flex-wrap: wrap; gap: 10px; }
         
         /* Menu Superior */
-        .navbar { background-color: #2c3e50; padding: 15px 20px; display: flex; gap: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .aba-btn { background: none; border: none; color: #bdc3c7; font-size: 15px; font-weight: bold; cursor: pointer; padding: 8px 15px; border-radius: 4px; transition: 0.3s; }
+        .navbar { background-color: #2c3e50; padding: 15px 20px; display: flex; gap: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex-wrap: wrap; }
+        .aba-btn { background: none; border: none; color: #bdc3c7; font-size: 15px; font-weight: bold; cursor: pointer; padding: 8px 15px; border-radius: 4px; transition: 0.3s; flex: 1; min-width: 150px; }
         .aba-btn:hover { color: white; background-color: #34495e; }
         .aba-ativa { color: white; background-color: #27ae60; }
         .aba-ativa:hover { background-color: #219150; }
 
-        .container-principal { padding: 20px; max-width: 1650px; margin: 0 auto; }
-        .layout-flex { display: flex; gap: 20px; }
-        .painel-cadastro { width: 22%; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); height: fit-content; position: sticky; top: 20px; }
-        .painel-conteudo { width: 78%; display: flex; flex-direction: column; gap: 15px; }
-        .painel-branco { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .container-principal { padding: 20px; max-width: 1650px; margin: 0 auto; box-sizing: border-box; }
+        .layout-flex { display: flex; gap: 20px; align-items: flex-start; }
+        .painel-cadastro { width: 22%; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); position: sticky; top: 20px; box-sizing: border-box; }
+        .painel-conteudo { width: 78%; display: flex; flex-direction: column; gap: 15px; box-sizing: border-box; min-width: 0; /* Previne overflow */ }
+        .painel-branco { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); box-sizing: border-box; overflow: hidden; }
         
         h2, h3 { color: #2c3e50; margin: 0 0 20px 0; }
-        .form-group { margin-bottom: 12px; }
+        .form-group { margin-bottom: 12px; width: 100%; }
+        .form-row { display: flex; gap: 10px; width: 100%; }
         label { display: block; font-weight: bold; margin-bottom: 4px; font-size: 13px; color: #555; }
         input, select { width: 100%; padding: 8px; border: 1px solid #ccd1d9; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
         
         .btn { display: block; width: 100%; background-color: #27ae60; color: white; padding: 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 15px; font-weight: bold; margin-top: 15px; }
         .btn-editando { background-color: #f39c12; }
         .btn-limpar { background-color: #7f8c8d; }
-        .btn-acao-topo { background: #34495e; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 5px; }
+        .btn-acao-topo { background: #34495e; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 5px; flex: 1; white-space: nowrap; }
         
-        .resumo-container { display: flex; gap: 20px; }
-        .card { flex: 1; background: white; padding: 10px 15px; border-radius: 8px; text-align: center; border-bottom: 4px solid #ddd; }
-        .card h4 { margin: 0; font-size: 12px; }
-        .card p { margin: 4px 0 0 0; font-size: 20px; font-weight: bold; }
+        .resumo-container { display: flex; gap: 20px; flex-wrap: wrap; }
+        .card { flex: 1; min-width: 200px; background: white; padding: 15px; border-radius: 8px; text-align: center; border-bottom: 4px solid #ddd; box-sizing: border-box; }
+        .card h4 { margin: 0; font-size: 14px; color: #7f8c8d; }
+        .card p { margin: 8px 0 0 0; font-size: 22px; font-weight: bold; }
         
-        .filtros-area { background: #f8f9fa; padding: 12px 15px; border-radius: 6px; border: 1px solid #e1e5eb; margin-bottom: 15px; }
-        .filtros-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; align-items: end; }
-        .acoes-tabela { display: flex; gap: 10px; margin-top: 10px; justify-content: flex-end; border-top: 1px solid #eee; padding-top: 10px; }
+        .filtros-area { background: #f8f9fa; padding: 15px; border-radius: 6px; border: 1px solid #e1e5eb; margin-bottom: 15px; box-sizing: border-box; }
+        .filtros-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px; align-items: end; }
+        .acoes-tabela { display: flex; gap: 10px; margin-top: 15px; justify-content: flex-end; border-top: 1px solid #eee; padding-top: 15px; flex-wrap: wrap; }
 
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; table-layout: fixed; }
-        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #eee; font-size: 13px; word-wrap: break-word; }
+        /* TABELA RESPONSIVA: Permite rolagem lateral no celular sem quebrar o site */
+        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 20px; }
+        table { width: 100%; min-width: 800px; /* Força tamanho mínimo para não esmagar colunas */ border-collapse: collapse; }
+        th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #eee; font-size: 13px; }
         th { background-color: #f8f9fa; border-bottom: 2px solid #ddd; color: #333; }
+        
         .vencido { background-color: #ffdddd; }
         .vence-hoje { background-color: #fff3cd; }
         .btn-acao { border: none; background: none; cursor: pointer; font-size: 16px; padding: 4px; border-radius: 4px; }
         .btn-acao:hover { background: #eee; }
 
-        .sub-navbar { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        .sub-aba-btn { background: none; border: none; font-size: 15px; font-weight: bold; color: #7f8c8d; cursor: pointer; padding: 8px 15px; border-radius: 4px; }
+        .sub-navbar { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; flex-wrap: wrap; }
+        .sub-aba-btn { background: none; border: none; font-size: 15px; font-weight: bold; color: #7f8c8d; cursor: pointer; padding: 8px 15px; border-radius: 4px; flex: 1; min-width: 120px; text-align: center; }
         .sub-aba-ativa { color: #2980b9; background: #ebf5fb; border-bottom: 3px solid #2980b9; border-radius: 4px 4px 0 0; }
 
         .relatorios-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
@@ -87,12 +92,32 @@
         .lista-itens li { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: white; border: 1px solid #eee; margin-bottom: 5px; border-radius: 4px; font-size: 13px; }
         .lista-itens li button { background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
 
-        /* Área de Administração e Backup */
-        .admin-area { grid-column: 1 / -1; background: #fff3cd; padding: 20px; border-radius: 8px; border: 1px solid #ffeeba; margin-top: 10px; }
-        .tabela-simples th, .tabela-simples td { padding: 5px; border-bottom: 1px solid #ccc; font-size: 12px; }
+        .admin-area { grid-column: 1 / -1; background: #fff3cd; padding: 20px; border-radius: 8px; border: 1px solid #ffeeba; margin-top: 10px; box-sizing: border-box; overflow: hidden; }
+        .tabela-simples th, .tabela-simples td { padding: 8px 5px; border-bottom: 1px solid #ccc; font-size: 13px; }
         
-        .backup-area { grid-column: 1 / -1; background: #e8f8f5; padding: 20px; border-radius: 8px; border: 1px solid #1abc9c; margin-top: 10px; }
-        .backup-flex { display: flex; gap: 20px; align-items: center; margin-top: 15px; }
+        .backup-area { grid-column: 1 / -1; background: #e8f8f5; padding: 20px; border-radius: 8px; border: 1px solid #1abc9c; margin-top: 10px; box-sizing: border-box; }
+        .backup-flex { display: flex; gap: 20px; align-items: center; margin-top: 15px; flex-wrap: wrap; }
+
+        /* ---------- REGRAS PARA CELULARES E TABLETS PEQUENOS ---------- */
+        @media (max-width: 900px) {
+            .layout-flex { flex-direction: column; }
+            .painel-cadastro, .painel-conteudo { width: 100%; position: static; }
+            .filtros-grid { grid-template-columns: 1fr 1fr; } /* Transforma filtros de 8 colunas para 2 colunas */
+            .relatorios-grid, .config-grid { grid-template-columns: 1fr; } /* Quadros e listas um embaixo do outro */
+            
+            .titulo-empresa .menor { font-size: 16px; }
+            .titulo-empresa .maior { font-size: 22px; }
+            .login-box { padding: 20px; }
+
+            /* Ajustes Finos para telas muito pequenas */
+            .form-row { flex-direction: column; gap: 0; }
+            .backup-flex { flex-direction: column; align-items: stretch; }
+            .backup-flex > div { flex-direction: column; align-items: stretch; gap: 10px; padding: 15px; }
+            
+            /* Ajuste de formulário de novo usuário */
+            #novoUserCpf, #novoUserSenha, #novoUserPerfil { flex: 1 1 100%; width: 100%; margin-bottom: 5px; }
+            .admin-area > div > div { flex-direction: column !important; }
+        }
 
         @media print {
             @page { size: landscape; margin: 10mm; }
@@ -107,7 +132,6 @@
 <body>
 
 <div id="telaLogin">
-    
     <div class="titulo-empresa">
         <div class="menor">Controle Financeiro</div>
         <div class="maior">Construtora e Incorporadora<br>Morarbem Ltda</div>
@@ -144,20 +168,26 @@
                 <h2 id="tituloCadastro">💸 Registro</h2>
                 <input type="hidden" id="editId">
                 <div class="form-group"><label>Descrição:</label><input type="text" id="cadDesc"></div>
-                <div style="display: flex; gap: 10px;">
+                
+                <div class="form-row">
                     <div class="form-group" style="flex: 1;"><label>Categoria:</label><select id="cadCat"></select></div>
                     <div class="form-group" style="flex: 1;"><label>Conta:</label><select id="cadConta"></select></div>
                 </div>
-                <div style="display: flex; gap: 10px;">
+                
+                <div class="form-row">
                     <div class="form-group" style="flex: 1;"><label>Valor (R$):</label><input type="number" id="cadValor" step="0.01"></div>
                     <div class="form-group" style="flex: 1;"><label>Data Início:</label><input type="date" id="cadData"></div>
                 </div>
-                <div class="form-group"><label>Tipo:</label><select id="cadTipo"><option value="Débito">Débito</option><option value="Crédito">Crédito</option></select></div>
+                
+                <div class="form-group"><label>Tipo:</label><select id="cadTipo"><option value="Débito">Débito (Saída)</option><option value="Crédito">Crédito (Entrada)</option></select></div>
                 <div class="form-group"><label>Pagamento:</label><select id="cadPagamento" onchange="toggleOpcoesPagamento()"><option value="À Vista">À Vista</option><option value="Parcelado">Parcelado</option><option value="Recorrente">Recorrente</option></select></div>
+                
                 <div id="caixaOpcoesPagamento" style="display: none; background: #f0f4f8; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
                     <label id="labelOpcoesPagamento">Nº de Parcelas:</label><input type="number" id="numRepeticoes" value="2" min="2">
                 </div>
+                
                 <div class="form-group"><label>Status Inicial:</label><select id="cadStatus"></select></div>
+                
                 <div style="display: flex; gap: 10px;">
                     <button class="btn" id="btnSalvar" style="flex: 2; margin-top: 10px;" onclick="adicionarLancamento()">Registrar</button>
                     <button class="btn btn-limpar" style="flex: 1; margin-top: 10px;" onclick="limparFormulario()">🧹 Limpar</button>
@@ -190,23 +220,26 @@
                             <button class="btn-acao-topo" onclick="window.print()">🖨️ Imprimir</button>
                         </div>
                     </div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th style="width: 12%;">Vencimento</th><th style="width: 50%;">Descrição</th><th style="width: 12%;">Valor</th><th style="width: 10%;">Tipo</th><th style="width: 10%;">Status</th><th style="width: 6%; text-align: center;" data-html2canvas-ignore class="fin-req">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="corpoTabela"></tbody>
-                    </table>
+                    
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 14%;">Vencimento</th><th style="width: 48%;">Descrição</th><th style="width: 12%;">Valor</th><th style="width: 10%;">Tipo</th><th style="width: 10%;">Status</th><th style="width: 6%; text-align: center;" data-html2canvas-ignore class="fin-req">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="corpoTabela"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div id="abaRelatorios" class="painel-branco aba-conteudo" style="display: none;">
             <h2>📈 Resumo Financeiro por Categoria</h2>
-            <div class="filtros-area" style="display: flex; gap: 15px; max-width: 500px;" data-html2canvas-ignore>
-                <div style="flex: 1;"><label>Período De:</label><input type="date" id="rDataInicio" onchange="gerarRelatorios()"></div>
-                <div style="flex: 1;"><label>Até:</label><input type="date" id="rDataFim" onchange="gerarRelatorios()"></div>
+            <div class="filtros-area" style="display: flex; flex-wrap: wrap; gap: 15px; max-width: 500px;" data-html2canvas-ignore>
+                <div style="flex: 1; min-width: 150px;"><label>Período De:</label><input type="date" id="rDataInicio" onchange="gerarRelatorios()"></div>
+                <div style="flex: 1; min-width: 150px;"><label>Até:</label><input type="date" id="rDataFim" onchange="gerarRelatorios()"></div>
             </div>
             <div class="relatorios-grid">
                 <div class="rel-box"><h3 style="color: #27ae60; font-size: 15px;">✅ Entradas (Efetuadas)</h3><div id="relCreditoEfetuado"></div></div>
@@ -226,17 +259,17 @@
             
             <div id="subMesAnterior" style="display: none;">
                 <h3 id="tituloMesAnterior" style="color: #7f8c8d; border-bottom: 2px solid #eee; padding-bottom: 5px;">Mês Anterior</h3>
-                <table><thead><tr><th style="width:12%;">Data</th><th style="width:48%;">Descrição / Conta</th><th style="width:12%;">Categoria</th><th style="width:10%;">Tipo</th><th style="width:10%;">Valor</th><th style="width:8%;">Status</th></tr></thead><tbody id="tbMesAnterior"></tbody></table>
+                <div class="table-responsive"><table><thead><tr><th style="width:12%;">Data</th><th style="width:48%;">Descrição / Conta</th><th style="width:12%;">Categoria</th><th style="width:10%;">Tipo</th><th style="width:10%;">Valor</th><th style="width:8%;">Status</th></tr></thead><tbody id="tbMesAnterior"></tbody></table></div>
             </div>
             
             <div id="subMesAtual">
                 <h3 id="tituloMesAtual" style="color: #2980b9; border-bottom: 2px solid #2980b9; padding-bottom: 5px;">Mês Atual</h3>
-                <table><thead><tr><th style="width:12%;">Data</th><th style="width:48%;">Descrição / Conta</th><th style="width:12%;">Categoria</th><th style="width:10%;">Tipo</th><th style="width:10%;">Valor</th><th style="width:8%;">Status</th></tr></thead><tbody id="tbMesAtual"></tbody></table>
+                <div class="table-responsive"><table><thead><tr><th style="width:12%;">Data</th><th style="width:48%;">Descrição / Conta</th><th style="width:12%;">Categoria</th><th style="width:10%;">Tipo</th><th style="width:10%;">Valor</th><th style="width:8%;">Status</th></tr></thead><tbody id="tbMesAtual"></tbody></table></div>
             </div>
             
             <div id="subMesPosterior" style="display: none;">
                 <h3 id="tituloMesPosterior" style="color: #f39c12; border-bottom: 2px solid #f39c12; padding-bottom: 5px;">Mês Posterior</h3>
-                <table><thead><tr><th style="width:12%;">Data</th><th style="width:48%;">Descrição / Conta</th><th style="width:12%;">Categoria</th><th style="width:10%;">Tipo</th><th style="width:10%;">Valor</th><th style="width:8%;">Status</th></tr></thead><tbody id="tbMesPosterior"></tbody></table>
+                <div class="table-responsive"><table><thead><tr><th style="width:12%;">Data</th><th style="width:48%;">Descrição / Conta</th><th style="width:12%;">Categoria</th><th style="width:10%;">Tipo</th><th style="width:10%;">Valor</th><th style="width:8%;">Status</th></tr></thead><tbody id="tbMesPosterior"></tbody></table></div>
             </div>
         </div>
 
@@ -255,7 +288,7 @@
                             📥 Baixar Backup .JSON
                         </button>
                         <div style="display: flex; align-items: center; gap: 10px; background: white; padding: 6px 12px; border-radius: 4px; border: 1px solid #bdc3c7;">
-                            <input type="file" id="arquivoBackup" accept=".json" style="border: none; padding: 0; width: 220px; font-size: 12px;">
+                            <input type="file" id="arquivoBackup" accept=".json" style="border: none; padding: 0; width: 100%; font-size: 12px;">
                             <button class="btn-acao-topo" style="background: #e67e22; padding: 6px 12px;" onclick="restaurarBackup()">📤 Importar / Restaurar Nuvem</button>
                         </div>
                     </div>
@@ -264,30 +297,32 @@
                 <div class="admin-area admin-req">
                     <h3 style="color: #d35400; margin-top: 0;">🛡️ Gestão de Usuários (Apenas Administrador)</h3>
                     
-                    <div style="background: white; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+                    <div style="background: white; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
                         <p style="margin-top:0; font-size:13px; font-weight:bold;">➕ Criar Nova Conta de Acesso:</p>
-                        <div style="display:flex; gap:10px;">
-                            <input type="text" id="novoUserCpf" placeholder="CPF do Novo Usuário" style="flex:2; font-size:12px; padding:6px;">
-                            <input type="password" id="novoUserSenha" placeholder="Senha" style="flex:2; font-size:12px; padding:6px;">
-                            <select id="novoUserPerfil" style="flex:1; font-size:12px; padding:6px;">
+                        <div style="display:flex; gap:10px; align-items: center;">
+                            <input type="text" id="novoUserCpf" placeholder="CPF do Novo Usuário" style="margin:0; font-size:13px;">
+                            <input type="password" id="novoUserSenha" placeholder="Senha" style="margin:0; font-size:13px;">
+                            <select id="novoUserPerfil" style="margin:0; font-size:13px;">
                                 <option value="Observador">Observador</option>
                                 <option value="Financeiro">Financeiro</option>
                                 <option value="Administrador">Administrador</option>
                             </select>
-                            <button class="btn-acao-topo" style="background:#27ae60;" onclick="criarNovoUsuarioPeloAdmin()">Criar Conta</button>
+                            <button class="btn-acao-topo" style="background:#27ae60; padding:10px 15px;" onclick="criarNovoUsuarioPeloAdmin()">Criar Conta</button>
                         </div>
-                        <small style="color:#7f8c8d; display:block; margin-top:5px;">⚠️ *Para APAGAR ou MUDAR SENHAS definitivamente, acesse o painel Firebase > Authentication.</small>
+                        <small style="color:#7f8c8d; display:block; margin-top:8px;">⚠️ *Para APAGAR ou MUDAR SENHAS definitivamente, acesse o painel Firebase > Authentication.</small>
                     </div>
 
-                    <table class="tabela-simples" style="width: 100%; background: white;">
-                        <thead><tr><th style="text-align:left;">CPF do Usuário</th><th style="text-align:left;">Perfil de Acesso</th><th style="text-align:left;">Status da Conta</th></tr></thead>
-                        <tbody id="tabelaUsuariosAdmin"></tbody>
-                    </table>
+                    <div class="table-responsive" style="margin-bottom:0;">
+                        <table class="tabela-simples" style="width: 100%; background: white;">
+                            <thead><tr><th style="text-align:left;">CPF do Usuário</th><th style="text-align:left;">Perfil de Acesso</th><th style="text-align:left;">Status da Conta</th></tr></thead>
+                            <tbody id="tabelaUsuariosAdmin"></tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <div class="admin-area admin-req" style="background: #e8ebef; border-color: #d1d8e0;">
                     <h3 style="color: #2c3e50; margin-top: 0;">📋 Logs do Sistema (Últimas 50 ações)</h3>
-                    <div style="max-height: 200px; overflow-y: auto;">
+                    <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
                         <table class="tabela-simples" style="width: 100%; background: white;">
                             <thead><tr><th style="text-align:left;">Data/Hora</th><th style="text-align:left;">Usuário (CPF)</th><th style="text-align:left;">Ação</th><th style="text-align:left;">Detalhes</th></tr></thead>
                             <tbody id="tabelaLogsAdmin"></tbody>
@@ -416,6 +451,12 @@
             document.getElementById('painelCadastro').style.display = 'block';
             document.getElementById('areaRelatorioPDF').style.width = '78%';
         }
+        
+        // No celular as larguras voltam para 100% via CSS automático
+        if (window.innerWidth <= 900 && (perfilUsuario === 'Administrador' || perfilUsuario === 'Financeiro')) {
+            document.getElementById('areaRelatorioPDF').style.width = '100%';
+        }
+
         atualizarTela(); 
     }
 
@@ -486,16 +527,16 @@
                     let statusAtual = u.status || 'Ativo';
                     h += `<tr><td>${formatarCPFText(u.cpf)}</td>
                     <td>
-                        <select onchange="alterarPerfilUser('${doc.id}', 'perfil', this.value)" style="padding:2px; font-size:12px;">
+                        <select onchange="alterarPerfilUser('${doc.id}', 'perfil', this.value)" style="padding:4px; font-size:13px; width:100%;">
                             <option value="Observador" ${u.perfil==='Observador'?'selected':''}>Observador</option>
                             <option value="Financeiro" ${u.perfil==='Financeiro'?'selected':''}>Financeiro</option>
                             <option value="Administrador" ${u.perfil==='Administrador'?'selected':''}>Administrador</option>
                         </select>
                     </td>
                     <td>
-                        <select onchange="alterarPerfilUser('${doc.id}', 'status', this.value)" style="padding:2px; font-size:12px; background: ${statusAtual==='Suspenso'?'#ffdddd':'#e8f8f5'}">
+                        <select onchange="alterarPerfilUser('${doc.id}', 'status', this.value)" style="padding:4px; font-size:13px; width:100%; background: ${statusAtual==='Suspenso'?'#ffdddd':'#e8f8f5'}">
                             <option value="Ativo" ${statusAtual==='Ativo'?'selected':''}>🟢 Ativo</option>
-                            <option value="Suspenso" ${statusAtual==='Suspenso'?'selected':''}>🔴 Suspenso (Bloquear)</option>
+                            <option value="Suspenso" ${statusAtual==='Suspenso'?'selected':''}>🔴 Suspenso</option>
                         </select>
                     </td></tr>`;
                 });
@@ -507,14 +548,14 @@
                 snap.forEach(doc => {
                     let l = doc.data();
                     let dataFormat = new Date(l.dataHora).toLocaleString('pt-BR');
-                    h += `<tr><td>${dataFormat}</td><td>${l.usuario}</td><td><span style="background:#e8f8f5; color:#16a085; padding:2px 5px; border-radius:3px; font-weight:bold;">${l.acao}</span></td><td>${l.detalhes}</td></tr>`;
+                    h += `<tr><td style="white-space:nowrap;">${dataFormat}</td><td style="white-space:nowrap;">${l.usuario}</td><td><span style="background:#e8f8f5; color:#16a085; padding:3px 6px; border-radius:4px; font-weight:bold; font-size:11px;">${l.acao}</span></td><td>${l.detalhes}</td></tr>`;
                 });
                 document.getElementById('tabelaLogsAdmin').innerHTML = h;
             });
         }
     }
 
-    // --- FUNÇÕES MANTIDAS E ADAPTADAS ---
+    // --- FUNÇÕES GERAIS ---
     function salvarConfigNaNuvem() {
         if(perfilUsuario === 'Observador') return;
         db.collection("config").doc("listas").set({ categorias: categorias, statusLista: statusLista, contasLista: contasLista });
@@ -524,7 +565,10 @@
         document.querySelectorAll('.aba-conteudo').forEach(el => el.style.display = 'none');
         document.querySelectorAll('.aba-btn').forEach(el => el.classList.remove('aba-ativa'));
         let painel = document.getElementById(abaId === 'dashboard' ? 'abaDashboard' : (abaId === 'relatorios' ? 'abaRelatorios' : (abaId === 'mensal' ? 'abaMensal' : 'abaConfig')));
-        painel.style.display = abaId === 'dashboard' ? 'flex' : 'block';
+        
+        // Retorna pro Flex no PC, ou bloqueia no celular
+        painel.style.display = (abaId === 'dashboard' && window.innerWidth > 900) ? 'flex' : 'block';
+        
         document.getElementById('btnAba' + abaId.charAt(0).toUpperCase() + abaId.slice(1)).classList.add('aba-ativa');
         if(abaId === 'relatorios') gerarRelatorios();
         if(abaId === 'mensal') { mudarSubAbaMes('Atual'); gerarVisaoMensal(); }
@@ -564,6 +608,7 @@
             registrarLog("ADC_CONFIG", `Adicionou ${t}: ${v}`);
         }
     }
+    
     function remConfig(t, i) {
         if(perfilUsuario === 'Observador') return alert("Sem permissão");
         let itemRemovido = "";
@@ -573,6 +618,7 @@
         salvarConfigNaNuvem();
         registrarLog("REM_CONFIG", `Removeu ${t}: ${itemRemovido}`);
     }
+    
     function toggleOpcoesPagamento() {
         let t = document.getElementById("cadPagamento").value; let c = document.getElementById("caixaOpcoesPagamento"); let l = document.getElementById("labelOpcoesPagamento");
         if (t === "Parcelado") { c.style.display = "block"; l.innerText = "Nº de Parcelas:"; } else if (t === "Recorrente") { c.style.display = "block"; l.innerText = "Meses projetados:"; } else { c.style.display = "none"; }
@@ -620,8 +666,13 @@
         document.getElementById("cadValor").value = l.valor; document.getElementById("cadData").value = l.data; 
         document.getElementById("cadTipo").value = l.tipo; document.getElementById("cadStatus").value = l.status; 
         document.getElementById("cadPagamento").value = "À Vista"; toggleOpcoesPagamento();
-        document.getElementById("tituloCadastro").innerText = "✏️ Editando"; document.getElementById("btnSalvar").innerText = "Salvar Alterações"; 
-        document.getElementById("btnSalvar").classList.add("btn-editando"); 
+        
+        document.getElementById("tituloCadastro").innerText = "✏️ Editando"; 
+        document.getElementById("btnSalvar").innerText = "Salvar Alterações"; 
+        document.getElementById("btnSalvar").classList.add("btn-editando");
+        
+        // Rolar tela para o topo no celular
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function limparFormulario() {
@@ -655,7 +706,7 @@
             let iconeData = isEfetuada ? "✅" : (isAtrasado ? "🔴" : (isHoje ? "⚠️" : "⏳"));
             if (isAtrasado) tr.className = "vencido"; else if (isHoje) tr.className = "vence-hoje";
 
-            let selectStatus = perfilUsuario === 'Observador' ? l.status : `<select onchange="alterarStatus('${l.id}', this.value)" style="width: 100%; max-width: 100px; padding: 4px; font-size: 12px; border-radius: 4px;"><option value="${l.status}" selected>${l.status}</option>${statusLista.filter(s=>s!=l.status).map(s=>`<option value="${s}">${s}</option>`).join('')}</select>`;
+            let selectStatus = perfilUsuario === 'Observador' ? l.status : `<select onchange="alterarStatus('${l.id}', this.value)" style="width: 100%; min-width: 100px; padding: 6px 4px; font-size: 13px; border-radius: 4px;"><option value="${l.status}" selected>${l.status}</option>${statusLista.filter(s=>s!=l.status).map(s=>`<option value="${s}">${s}</option>`).join('')}</select>`;
             let acoesHtml = perfilUsuario === 'Observador' ? '' : `<td style="text-align:center; white-space:nowrap;" data-html2canvas-ignore class="fin-req"><button class="btn-acao" onclick="editar('${l.id}')">✏️</button><button class="btn-acao" onclick="remover('${l.id}')">🗑️</button></td>`;
 
             tr.innerHTML = `
@@ -688,7 +739,7 @@
         } 
     }
 
-    // --- FUNÇÕES DE BACKUP ---
+    // --- DEVOLVIDAS FUNÇÕES DE BACKUP QUE TINHAM SUMIDO ---
     function gerarBackup() {
         const backupData = { dados: lancamentos, categorias: categorias, status: statusLista, contas: contasLista };
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
