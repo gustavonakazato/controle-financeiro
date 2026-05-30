@@ -310,7 +310,6 @@
             <div class="config-grid">
                 
                 <div><h3>📁 Grupos de Arquivos</h3><ul class="lista-itens" id="listaGruposArqConfig"></ul><div style="display:flex; gap:10px;"><input type="text" id="novoGrupoArqInput" placeholder="Ex: Obra 1..."><button class="btn-acao-topo" onclick="addConfig('grupoArq')">Adicionar</button></div></div>
-                
                 <div><h3>🏦 Contas</h3><ul class="lista-itens" id="listaContasConfig"></ul><div style="display:flex; gap:10px;"><input type="text" id="novaContaInput" placeholder="Nova conta..."><button class="btn-acao-topo" onclick="addConfig('conta')">Adicionar</button></div></div>
                 <div><h3>📁 Categorias Financ.</h3><ul class="lista-itens" id="listaCatConfig"></ul><div style="display:flex; gap:10px;"><input type="text" id="novaCatInput" placeholder="Nova categoria..."><button class="btn-acao-topo" onclick="addConfig('cat')">Adicionar</button></div></div>
                 <div><h3>📌 Status</h3><ul class="lista-itens" id="listaStatusConfig"></ul><div style="display:flex; gap:10px;"><input type="text" id="novoStatusInput" placeholder="Novo status..."><button class="btn-acao-topo" onclick="addConfig('status')">Adicionar</button></div></div>
@@ -389,7 +388,7 @@
     let categorias = ["Alimentação", "Moradia", "Transporte", "Lazer", "Saúde", "Outros", "Salário", "Impostos"];
     let statusLista = ["A Vencer", "Efetuada"];
     let contasLista = ["Carteira", "Conta Corrente", "Poupança"];
-    let gruposArquivos = ["Geral", "Arquivos da Empresa", "Projetos", "Comprovantes"]; // Nova variável
+    let gruposArquivos = ["Geral", "Arquivos da Empresa", "Projetos", "Comprovantes"]; 
     
     let userAutenticado = null;
     let perfilUsuario = 'Observador'; 
@@ -467,9 +466,13 @@
                 perfilUsuario = dadosUsuario.perfil;
                 document.getElementById('lblPerfil').innerText = perfilUsuario;
                 aplicarRestricoesUI();
+                
+                if(!window.ouvintesIniciados) {
+                    iniciarOuvintesDeDados();
+                    window.ouvintesIniciados = true;
+                }
             }
         });
-        iniciarOuvintesDeDados();
     }
 
     function aplicarRestricoesUI() {
@@ -533,10 +536,18 @@
         }
     }
 
+    // --- CORREÇÃO DO SISTEMA DE LOGS ---
     function registrarLog(acao, detalhes) {
         if(!userAutenticado) return;
         let cpfLog = userAutenticado.email.split('@')[0];
-        db.collection("logs").add({ dataHora: new Date().toISOString(), usuario: formatarCPFText(cpfLog), acao: acao, detalhes: detalhes });
+        
+        // MUDADO DE 'logs' PARA 'registros_atividades' PARA FUGIR DO ADBLOCK
+        db.collection("registros_atividades").add({ 
+            dataHora: new Date().toISOString(), 
+            usuario: formatarCPFText(cpfLog), 
+            acao: String(acao), 
+            detalhes: String(detalhes) 
+        }).catch(e => console.error("Falha silenciosa no LOG:", e));
     }
 
     // --- OUVINTES DO BANCO DE DADOS ---
@@ -547,7 +558,7 @@
                 if(d.categorias) categorias = d.categorias; 
                 if(d.statusLista) statusLista = d.statusLista; 
                 if(d.contasLista) contasLista = d.contasLista; 
-                if(d.gruposArquivos) gruposArquivos = d.gruposArquivos; // Puxa grupos de arquivos
+                if(d.gruposArquivos) gruposArquivos = d.gruposArquivos; 
             }
             carregarListas(); 
             atualizarTela();
@@ -594,14 +605,19 @@
                 document.getElementById('tabelaUsuariosAdmin').innerHTML = h;
             });
 
-            db.collection("logs").orderBy("dataHora", "desc").limit(50).onSnapshot(snap => {
+            // MUDADO AQUI TAMBÉM DE 'logs' PARA 'registros_atividades'
+            document.getElementById('tabelaLogsAdmin').innerHTML = `<tr><td colspan="4" style="text-align:center;">Carregando registros...</td></tr>`;
+            
+            db.collection("registros_atividades").orderBy("dataHora", "desc").limit(50).onSnapshot(snap => {
                 let h = "";
                 snap.forEach(doc => {
                     let l = doc.data();
                     let dataFormat = new Date(l.dataHora).toLocaleString('pt-BR');
                     h += `<tr><td style="white-space:nowrap;">${dataFormat}</td><td style="white-space:nowrap;">${l.usuario}</td><td><span style="background:#e8f8f5; color:#16a085; padding:3px 6px; border-radius:4px; font-weight:bold; font-size:11px;">${l.acao}</span></td><td>${l.detalhes}</td></tr>`;
                 });
-                document.getElementById('tabelaLogsAdmin').innerHTML = h;
+                document.getElementById('tabelaLogsAdmin').innerHTML = h || '<tr><td colspan="4" style="text-align:center;">Nenhuma atividade registrada.</td></tr>';
+            }, err => {
+                document.getElementById('tabelaLogsAdmin').innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">Erro: Ocorreu um problema ao carregar os logs.</td></tr>`;
             });
         }
     }
@@ -677,7 +693,7 @@
             categorias: categorias, 
             statusLista: statusLista, 
             contasLista: contasLista,
-            gruposArquivos: gruposArquivos // Salva os grupos de arquivos na nuvem
+            gruposArquivos: gruposArquivos 
         });
     }
 
@@ -710,9 +726,7 @@
     function formata(v) { return v.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}); }
     function formataData(d) { if(!d) return ""; return d.split('-').reverse().join('/'); }
 
-    // Carrega listas nos selects e nas configurações
     function carregarListas() {
-        // Dropdowns do Dashboard
         document.getElementById("cadCat").innerHTML = categorias.map(c => `<option value="${c}">${c}</option>`).join('');
         document.getElementById("fCat").innerHTML = '<option value="Todos">Todas</option>' + categorias.map(c => `<option value="${c}">${c}</option>`).join('');
         document.getElementById("cadStatus").innerHTML = statusLista.map(s => `<option value="${s}">${s}</option>`).join('');
@@ -720,11 +734,9 @@
         document.getElementById("cadConta").innerHTML = contasLista.map(c => `<option value="${c}">${c}</option>`).join('');
         document.getElementById("fConta").innerHTML = '<option value="Todas">Todas</option>' + contasLista.map(c => `<option value="${c}">${c}</option>`).join('');
         
-        // Dropdowns da Aba de Arquivos
         document.getElementById("arqGrupo").innerHTML = gruposArquivos.map(g => `<option value="${g}">${g}</option>`).join('');
         document.getElementById("fGrupoArq").innerHTML = '<option value="Todos">Todos os Grupos/Obras</option>' + gruposArquivos.map(g => `<option value="${g}">${g}</option>`).join('');
         
-        // Listas da Aba de Configurações
         document.getElementById("listaGruposArqConfig").innerHTML = gruposArquivos.map((g, i) => `<li>${g} <button onclick="remConfig('grupoArq', ${i})">Excluir</button></li>`).join('');
         document.getElementById("listaCatConfig").innerHTML = categorias.map((c, i) => `<li>${c} <button onclick="remConfig('cat', ${i})">Excluir</button></li>`).join('');
         document.getElementById("listaStatusConfig").innerHTML = statusLista.map((s, i) => `<li>${s} <button onclick="remConfig('status', ${i})">Excluir</button></li>`).join('');
@@ -875,7 +887,6 @@
         } 
     }
 
-    // --- FUNÇÕES DE BACKUP ---
     function gerarBackup() {
         const backupData = { dados: lancamentos, categorias: categorias, status: statusLista, contas: contasLista, gruposArquivos: gruposArquivos };
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
