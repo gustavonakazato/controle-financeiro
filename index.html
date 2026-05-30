@@ -111,9 +111,9 @@
             #novoUserCpf, #novoUserSenha, #novoUserPerfil { flex: 1 1 100%; width: 100%; margin-bottom: 5px; }
             .admin-area > div > div { flex-direction: column !important; }
             
-            /* Ajuste específico para área de arquivos no celular */
             #divNovoArquivo { flex-direction: column; align-items: stretch; }
-            #divNovoArquivo input, #divNovoArquivo button { width: 100%; margin-bottom: 10px; }
+            #divNovoArquivo select, #divNovoArquivo input, #divNovoArquivo button { width: 100%; margin-bottom: 10px; flex: unset !important; }
+            .filtros-arq { flex-direction: column; align-items: stretch; }
         }
 
         @media print {
@@ -155,9 +155,7 @@
         <button id="btnAbaDashboard" class="aba-btn aba-ativa" onclick="mudarAba('dashboard')">📊 Dashboard</button>
         <button id="btnAbaRelatorios" class="aba-btn" onclick="mudarAba('relatorios')">📈 Resumo Categoria</button>
         <button id="btnAbaMensal" class="aba-btn" onclick="mudarAba('mensal')">📅 Visão Mensal</button>
-        
         <button id="btnAbaArquivos" class="aba-btn" onclick="mudarAba('arquivos')">📁 Arquivos da Obra</button>
-        
         <button id="btnAbaConfig" class="aba-btn config-req" onclick="mudarAba('config')">⚙️ Configurações e Admin</button>
     </div>
 
@@ -274,24 +272,29 @@
         </div>
 
         <div id="abaArquivos" class="painel-branco aba-conteudo" style="display: none;">
-            <h2>📁 Arquivos e Documentos da Obra</h2>
-            <p style="font-size: 14px; color: #555; margin-top: 0;">Acesse aqui os projetos, imagens e documentos armazenados de forma segura via Google Drive.</p>
+            <h2>📁 Arquivos e Documentos</h2>
+            <p style="font-size: 14px; color: #555; margin-top: 0;">Acesse e gerencie os documentos armazenados de forma segura no Google Drive, organizados por Grupos/Obras.</p>
             
             <div class="fin-req" style="background: #f8f9fa; padding: 15px; border-radius: 6px; border: 1px solid #e1e5eb; margin-bottom: 20px;">
                 <h3 style="margin-top: 0; font-size: 14px; color: #2980b9;">➕ Adicionar Novo Link do Drive</h3>
                 <div id="divNovoArquivo" style="display: flex; gap: 10px; align-items: center;">
-                    <input type="text" id="arqNome" placeholder="Nome do Arquivo (Ex: Planta Baixa Lote 4)" style="flex: 2; margin: 0;">
-                    <input type="url" id="arqLink" placeholder="Cole o link de compartilhamento do Google Drive aqui" style="flex: 3; margin: 0;">
-                    <button class="btn-acao-topo" style="background: #2980b9; padding: 9px 15px;" onclick="adicionarArquivo()">Salvar Link</button>
+                    <select id="arqGrupo" style="flex: 1.5; margin: 0; font-size: 13px;"></select>
+                    <input type="text" id="arqNome" placeholder="Nome do Arquivo (Ex: Planta Baixa)" style="flex: 2; margin: 0;">
+                    <input type="url" id="arqLink" placeholder="Cole o link de compartilhamento (https://...)" style="flex: 3; margin: 0;">
+                    <button class="btn-acao-topo" style="background: #2980b9; padding: 9px 15px; flex: 1;" onclick="adicionarArquivo()">Salvar</button>
                 </div>
-                <small style="color: #7f8c8d; display: block; margin-top: 8px;">⚠️ <b>Importante:</b> Certifique-se de que o link no seu Google Drive esteja configurado como <i>"Qualquer pessoa com o link pode ver"</i> antes de salvá-lo aqui.</small>
+            </div>
+
+            <div class="filtros-arq" style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px; background: #e8ebef; padding: 10px; border-radius: 6px;">
+                <label style="margin: 0; font-weight: bold;">🔎 Filtrar visualização por Grupo/Obra:</label>
+                <select id="fGrupoArq" onchange="renderizarArquivos()" style="width: 250px; margin: 0;"></select>
             </div>
 
             <div class="table-responsive">
                 <table style="min-width: 600px;">
                     <thead>
                         <tr>
-                            <th style="width: 40%;">Nome do Arquivo / Documento</th>
+                            <th style="width: 40%;">Nome do Arquivo / Grupo</th>
                             <th style="width: 30%;">Acesso Seguro</th>
                             <th style="width: 20%;">Adicionado por</th>
                             <th style="width: 10%; text-align: center;" class="fin-req">Ações</th>
@@ -305,8 +308,11 @@
         <div id="abaConfig" class="painel-branco aba-conteudo" style="display: none;">
             <h2>⚙️ Configurações</h2>
             <div class="config-grid">
+                
+                <div><h3>📁 Grupos de Arquivos</h3><ul class="lista-itens" id="listaGruposArqConfig"></ul><div style="display:flex; gap:10px;"><input type="text" id="novoGrupoArqInput" placeholder="Ex: Obra 1..."><button class="btn-acao-topo" onclick="addConfig('grupoArq')">Adicionar</button></div></div>
+                
                 <div><h3>🏦 Contas</h3><ul class="lista-itens" id="listaContasConfig"></ul><div style="display:flex; gap:10px;"><input type="text" id="novaContaInput" placeholder="Nova conta..."><button class="btn-acao-topo" onclick="addConfig('conta')">Adicionar</button></div></div>
-                <div><h3>📁 Categorias</h3><ul class="lista-itens" id="listaCatConfig"></ul><div style="display:flex; gap:10px;"><input type="text" id="novaCatInput" placeholder="Nova categoria..."><button class="btn-acao-topo" onclick="addConfig('cat')">Adicionar</button></div></div>
+                <div><h3>📁 Categorias Financ.</h3><ul class="lista-itens" id="listaCatConfig"></ul><div style="display:flex; gap:10px;"><input type="text" id="novaCatInput" placeholder="Nova categoria..."><button class="btn-acao-topo" onclick="addConfig('cat')">Adicionar</button></div></div>
                 <div><h3>📌 Status</h3><ul class="lista-itens" id="listaStatusConfig"></ul><div style="display:flex; gap:10px;"><input type="text" id="novoStatusInput" placeholder="Novo status..."><button class="btn-acao-topo" onclick="addConfig('status')">Adicionar</button></div></div>
 
                 <div class="backup-area admin-req">
@@ -379,10 +385,11 @@
 
     // VARIÁVEIS GLOBAIS
     let lancamentos = [];
-    let arquivosObra = []; // Nova variável para arquivos
+    let arquivosObra = []; 
     let categorias = ["Alimentação", "Moradia", "Transporte", "Lazer", "Saúde", "Outros", "Salário", "Impostos"];
     let statusLista = ["A Vencer", "Efetuada"];
     let contasLista = ["Carteira", "Conta Corrente", "Poupança"];
+    let gruposArquivos = ["Geral", "Arquivos da Empresa", "Projetos", "Comprovantes"]; // Nova variável
     
     let userAutenticado = null;
     let perfilUsuario = 'Observador'; 
@@ -486,7 +493,7 @@
         }
 
         atualizarTela(); 
-        renderizarArquivos(); // Atualiza os botões de apagar arquivos de acordo com o perfil
+        renderizarArquivos(); 
     }
 
     function criarNovoUsuarioPeloAdmin() {
@@ -532,11 +539,18 @@
         db.collection("logs").add({ dataHora: new Date().toISOString(), usuario: formatarCPFText(cpfLog), acao: acao, detalhes: detalhes });
     }
 
-    // --- OUVINTES DO BANCO DE DADOS (Agora inclui Arquivos) ---
+    // --- OUVINTES DO BANCO DE DADOS ---
     function iniciarOuvintesDeDados() {
         db.collection("config").doc("listas").onSnapshot(doc => {
-            if (doc.exists) { let d = doc.data(); if(d.categorias) categorias = d.categorias; if(d.statusLista) statusLista = d.statusLista; if(d.contasLista) contasLista = d.contasLista; }
-            carregarListas(); atualizarTela();
+            if (doc.exists) { 
+                let d = doc.data(); 
+                if(d.categorias) categorias = d.categorias; 
+                if(d.statusLista) statusLista = d.statusLista; 
+                if(d.contasLista) contasLista = d.contasLista; 
+                if(d.gruposArquivos) gruposArquivos = d.gruposArquivos; // Puxa grupos de arquivos
+            }
+            carregarListas(); 
+            atualizarTela();
         });
 
         db.collection("lancamentos").onSnapshot(snap => {
@@ -546,7 +560,6 @@
             if(document.getElementById('abaRelatorios').style.display === 'block') gerarRelatorios();
         });
 
-        // NOVO OUVINTE: ARQUIVOS DO DRIVE
         db.collection("arquivos").orderBy("dataCriacao", "desc").onSnapshot(snap => {
             arquivosObra = [];
             snap.forEach(doc => {
@@ -593,9 +606,10 @@
         }
     }
 
-    // --- FUNÇÕES DA NOVA ABA DE ARQUIVOS DO DRIVE ---
+    // --- FUNÇÕES DA ABA DE ARQUIVOS DO DRIVE ---
     function adicionarArquivo() {
         if(perfilUsuario === 'Observador') return alert("Sem permissão");
+        let grupo = document.getElementById("arqGrupo").value;
         let nome = document.getElementById("arqNome").value.trim();
         let link = document.getElementById("arqLink").value.trim();
         
@@ -605,6 +619,7 @@
         let cpfFormatado = formatarCPFText(userAutenticado.email.split('@')[0]);
 
         db.collection("arquivos").add({
+            grupo: grupo || "Geral",
             nome: nome,
             link: link,
             dataCriacao: new Date().toISOString(),
@@ -612,13 +627,13 @@
         }).then(() => {
             document.getElementById("arqNome").value = "";
             document.getElementById("arqLink").value = "";
-            registrarLog("ADC_ARQUIVO", `Adicionou link de arquivo: ${nome}`);
+            registrarLog("ADC_ARQUIVO", `Adicionou arquivo [${grupo}] ${nome}`);
         });
     }
 
     function removerArquivo(id) {
         if(perfilUsuario === 'Observador') return alert("Sem permissão");
-        if(confirm("Tem certeza que deseja remover este link do sistema?\n(O arquivo original NO SEU DRIVE NÃO será apagado, apenas a visualização aqui será removida).")) {
+        if(confirm("Tem certeza que deseja remover este link do sistema?\n(O arquivo original NO SEU DRIVE NÃO será apagado).")) {
             db.collection("arquivos").doc(id).delete();
             registrarLog("REM_ARQUIVO", `Removeu link de arquivo ID: ${id}`);
         }
@@ -626,19 +641,27 @@
 
     function renderizarArquivos() {
         let h = "";
-        arquivosObra.forEach(a => {
+        let filtroGrupo = document.getElementById("fGrupoArq").value;
+
+        let arquivosFiltrados = arquivosObra;
+        if(filtroGrupo && filtroGrupo !== "Todos") {
+            arquivosFiltrados = arquivosObra.filter(a => (a.grupo || "Geral") === filtroGrupo);
+        }
+
+        arquivosFiltrados.forEach(a => {
             let dataFormatada = new Date(a.dataCriacao).toLocaleDateString('pt-BR');
             let btnApagar = perfilUsuario === 'Observador' ? '' : `<td style="text-align:center;" class="fin-req"><button class="btn-acao" onclick="removerArquivo('${a.id}')" title="Remover Link">🗑️</button></td>`;
-            
+            let nomeGrupo = a.grupo || "Geral";
+
             h += `<tr>
-                <td><strong>${a.nome}</strong></td>
+                <td><strong>${a.nome}</strong><br><small style="color:#7f8c8d;">📁 ${nomeGrupo}</small></td>
                 <td><a href="${a.link}" target="_blank" style="display:inline-block; background:#3498db; color:white; padding:6px 12px; border-radius:4px; text-decoration:none; font-weight:bold; font-size:12px;">🔗 Abrir no Drive</a></td>
                 <td style="font-size:11px; color:#7f8c8d;">${a.adicionadoPor}<br>${dataFormatada}</td>
                 ${btnApagar}
             </tr>`;
         });
         
-        document.getElementById("tbArquivos").innerHTML = h || '<tr><td colspan="4" style="text-align:center; padding: 20px; color:#999;">Nenhum arquivo adicionado ainda.</td></tr>';
+        document.getElementById("tbArquivos").innerHTML = h || '<tr><td colspan="4" style="text-align:center; padding: 20px; color:#999;">Nenhum arquivo encontrado neste grupo.</td></tr>';
         
         if(perfilUsuario === 'Observador') {
             document.querySelectorAll('#abaArquivos .fin-req').forEach(el => el.style.display = 'none');
@@ -650,7 +673,12 @@
     // --- FUNÇÕES DE NAVEGAÇÃO E REGRAS GERAIS ---
     function salvarConfigNaNuvem() {
         if(perfilUsuario === 'Observador') return;
-        db.collection("config").doc("listas").set({ categorias: categorias, statusLista: statusLista, contasLista: contasLista });
+        db.collection("config").doc("listas").set({ 
+            categorias: categorias, 
+            statusLista: statusLista, 
+            contasLista: contasLista,
+            gruposArquivos: gruposArquivos // Salva os grupos de arquivos na nuvem
+        });
     }
 
     function mudarAba(abaId) {
@@ -669,6 +697,7 @@
         document.getElementById('btnAba' + abaId.charAt(0).toUpperCase() + abaId.slice(1)).classList.add('aba-ativa');
         if(abaId === 'relatorios') gerarRelatorios();
         if(abaId === 'mensal') { mudarSubAbaMes('Atual'); gerarVisaoMensal(); }
+        if(abaId === 'arquivos') renderizarArquivos();
     }
     
     function mudarSubAbaMes(s) { 
@@ -681,13 +710,22 @@
     function formata(v) { return v.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}); }
     function formataData(d) { if(!d) return ""; return d.split('-').reverse().join('/'); }
 
+    // Carrega listas nos selects e nas configurações
     function carregarListas() {
+        // Dropdowns do Dashboard
         document.getElementById("cadCat").innerHTML = categorias.map(c => `<option value="${c}">${c}</option>`).join('');
         document.getElementById("fCat").innerHTML = '<option value="Todos">Todas</option>' + categorias.map(c => `<option value="${c}">${c}</option>`).join('');
         document.getElementById("cadStatus").innerHTML = statusLista.map(s => `<option value="${s}">${s}</option>`).join('');
         document.getElementById("fStatus").innerHTML = '<option value="Todos">Todos</option>' + statusLista.map(s => `<option value="${s}">${s}</option>`).join('');
         document.getElementById("cadConta").innerHTML = contasLista.map(c => `<option value="${c}">${c}</option>`).join('');
         document.getElementById("fConta").innerHTML = '<option value="Todas">Todas</option>' + contasLista.map(c => `<option value="${c}">${c}</option>`).join('');
+        
+        // Dropdowns da Aba de Arquivos
+        document.getElementById("arqGrupo").innerHTML = gruposArquivos.map(g => `<option value="${g}">${g}</option>`).join('');
+        document.getElementById("fGrupoArq").innerHTML = '<option value="Todos">Todos os Grupos/Obras</option>' + gruposArquivos.map(g => `<option value="${g}">${g}</option>`).join('');
+        
+        // Listas da Aba de Configurações
+        document.getElementById("listaGruposArqConfig").innerHTML = gruposArquivos.map((g, i) => `<li>${g} <button onclick="remConfig('grupoArq', ${i})">Excluir</button></li>`).join('');
         document.getElementById("listaCatConfig").innerHTML = categorias.map((c, i) => `<li>${c} <button onclick="remConfig('cat', ${i})">Excluir</button></li>`).join('');
         document.getElementById("listaStatusConfig").innerHTML = statusLista.map((s, i) => `<li>${s} <button onclick="remConfig('status', ${i})">Excluir</button></li>`).join('');
         document.getElementById("listaContasConfig").innerHTML = contasLista.map((c, i) => `<li>${c} <button onclick="remConfig('conta', ${i})">Excluir</button></li>`).join('');
@@ -695,12 +733,13 @@
 
     function addConfig(t) {
         if(perfilUsuario === 'Observador') return alert("Sem permissão");
-        let idInp = t==='cat'?"novaCatInput":(t==='status'?"novoStatusInput":"novaContaInput");
+        let idInp = t==='cat'?"novaCatInput":(t==='status'?"novoStatusInput":(t==='conta'?"novaContaInput":"novoGrupoArqInput"));
         let inp = document.getElementById(idInp); let v = inp.value.trim();
         if(v) {
             if(t==='cat' && !categorias.includes(v)) categorias.push(v);
             if(t==='status' && !statusLista.includes(v)) statusLista.push(v);
             if(t==='conta' && !contasLista.includes(v)) contasLista.push(v);
+            if(t==='grupoArq' && !gruposArquivos.includes(v)) gruposArquivos.push(v);
             inp.value = ""; salvarConfigNaNuvem();
             registrarLog("ADC_CONFIG", `Adicionou ${t}: ${v}`);
         }
@@ -712,6 +751,7 @@
         if(t==='cat') { itemRemovido = categorias[i]; categorias.splice(i,1); }
         if(t==='status') { itemRemovido = statusLista[i]; statusLista.splice(i,1); }
         if(t==='conta') { itemRemovido = contasLista[i]; contasLista.splice(i,1); }
+        if(t==='grupoArq') { itemRemovido = gruposArquivos[i]; gruposArquivos.splice(i,1); }
         salvarConfigNaNuvem();
         registrarLog("REM_CONFIG", `Removeu ${t}: ${itemRemovido}`);
     }
@@ -835,8 +875,9 @@
         } 
     }
 
+    // --- FUNÇÕES DE BACKUP ---
     function gerarBackup() {
-        const backupData = { dados: lancamentos, categorias: categorias, status: statusLista, contas: contasLista };
+        const backupData = { dados: lancamentos, categorias: categorias, status: statusLista, contas: contasLista, gruposArquivos: gruposArquivos };
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
         const downloadAnchorNode = document.createElement('a'); downloadAnchorNode.setAttribute("href", dataStr); downloadAnchorNode.setAttribute("download", `backup_financas_${new Date().toISOString().split('T')[0]}.json`); document.body.appendChild(downloadAnchorNode); downloadAnchorNode.click(); downloadAnchorNode.remove();
         registrarLog("BACKUP", "Fez o download de segurança em .JSON");
@@ -851,7 +892,12 @@
                 const backup = JSON.parse(e.target.result);
                 if (backup.dados && backup.categorias && backup.status && backup.contas) {
                     if(confirm("ATENÇÃO: Isso vai enviar todos os dados do arquivo para a nuvem. Continuar?")) {
-                        db.collection("config").doc("listas").set({ categorias: backup.categorias, statusLista: backup.status, contasLista: backup.contas });
+                        db.collection("config").doc("listas").set({ 
+                            categorias: backup.categorias, 
+                            statusLista: backup.status, 
+                            contasLista: backup.contas,
+                            gruposArquivos: backup.gruposArquivos || ["Geral"] 
+                        });
                         let batch = db.batch();
                         backup.dados.forEach(l => { batch.set(db.collection("lancamentos").doc(l.id.toString()), l); });
                         batch.commit().then(() => {
