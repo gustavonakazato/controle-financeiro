@@ -374,7 +374,7 @@
                     </div>
                     <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
                         <table class="tabela-simples" style="width: 100%; background: white;">
-                            <thead><tr><th style="text-align:left;">Data/Hora</th><th style="text-align:left;">Usuário (CPF)</th><th style="text-align:left;">Ação</th><th style="text-align:left;">Detalhes</th></tr></thead>
+                            <thead><tr><th style="text-align:left;">Data/Hora</th><th style="text-align:left;">Usuário</th><th style="text-align:left;">Ação</th><th style="text-align:left;">Detalhes</th></tr></thead>
                             <tbody id="tabelaLogsAdmin"></tbody>
                         </table>
                     </div>
@@ -431,9 +431,6 @@
             document.getElementById('telaLogin').style.display = 'none';
             document.getElementById('appLogado').style.display = 'block';
             
-            let cpfExtraido = user.email.split('@')[0];
-            document.getElementById('lblUsuario').innerText = formatarCPFText(cpfExtraido);
-            
             userAutenticado = user;
             carregarPerfilUsuario(user);
         } else {
@@ -468,7 +465,7 @@
 
     function sair() { auth.signOut(); location.reload(); }
 
-    function carregarPerfilUsuario(user) {
+function carregarPerfilUsuario(user) {
         db.collection("usuarios").doc(user.uid).onSnapshot(doc => {
             if (doc.exists) {
                 let dadosUsuario = doc.data();
@@ -480,11 +477,16 @@
                 }
 
                 perfilUsuario = dadosUsuario.perfil;
+                // Guarda o nome do usuário ativo para usar em arquivos e logs
+                window.nomeUsuarioLogado = dadosUsuario.nome || "Administrador Mestre";
+                
+                // Atualiza o topo da tela com o Nome Real
+                document.getElementById('lblUsuario').innerText = window.nomeUsuarioLogado;
                 document.getElementById('lblPerfil').innerText = perfilUsuario;
                 aplicarRestricoesUI();
-                
-                if(!window.ouvintesIniciados) {
-                    iniciarOuvintesDeDados();
+            }
+        });
+        iniciarOuvintesDeDados();
                     window.ouvintesIniciados = true;
                 }
             }
@@ -558,11 +560,12 @@
     function registrarLog(acao, detalhes) {
         if(!userAutenticado) return;
         let cpfLog = userAutenticado.email.split('@')[0];
+        // Usa o nome se disponível, caso contrário usa o CPF formatado como segurança
+        let identificadorUser = window.nomeUsuarioLogado || formatarCPFText(cpfLog);
         
-        // MUDADO DE 'logs' PARA 'registros_atividades' PARA FUGIR DO ADBLOCK
         db.collection("registros_atividades").add({ 
             dataHora: new Date().toISOString(), 
-            usuario: formatarCPFText(cpfLog), 
+            usuario: identificadorUser, 
             acao: String(acao), 
             detalhes: String(detalhes) 
         }).catch(e => console.error("Falha silenciosa no LOG:", e));
@@ -656,13 +659,14 @@
         if(!link.startsWith("http")) return alert("O link está incorreto. Copie o link completo do Google Drive (começando com https://)");
 
         let cpfFormatado = formatarCPFText(userAutenticado.email.split('@')[0]);
+        let identificadorUser = window.nomeUsuarioLogado || cpfFormatado;
 
         db.collection("arquivos").add({
             grupo: grupo || "Geral",
             nome: nome,
             link: link,
             dataCriacao: new Date().toISOString(),
-            adicionadoPor: cpfFormatado
+            adicionadoPor: identificadorUser
         }).then(() => {
             document.getElementById("arqNome").value = "";
             document.getElementById("arqLink").value = "";
