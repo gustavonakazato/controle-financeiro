@@ -477,16 +477,18 @@ function carregarPerfilUsuario(user) {
                 }
 
                 perfilUsuario = dadosUsuario.perfil;
-                // Guarda o nome do usuário ativo para usar em arquivos e logs
+                
+                // Guarda o nome do utilizador ativo para usar nos ficheiros e registos de atividade
                 window.nomeUsuarioLogado = dadosUsuario.nome || "Administrador Mestre";
                 
-                // Atualiza o topo da tela com o Nome Real
+                // Atualiza o topo do ecrã com o Nome Real
                 document.getElementById('lblUsuario').innerText = window.nomeUsuarioLogado;
                 document.getElementById('lblPerfil').innerText = perfilUsuario;
                 aplicarRestricoesUI();
-            }
-        });
-        iniciarOuvintesDeDados();
+                
+                // Proteção para não iniciar os ouvintes várias vezes
+                if(!window.ouvintesIniciados) {
+                    iniciarOuvintesDeDados();
                     window.ouvintesIniciados = true;
                 }
             }
