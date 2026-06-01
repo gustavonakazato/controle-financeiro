@@ -285,7 +285,7 @@
         </div>
 
         <div id="abaArquivos" class="painel-branco aba-conteudo" style="display: none;">
-            <h2>📁 Arquivos e Documentos</h2>
+            <h2>📁 Arquivos - Download</h2>
             <p style="font-size: 14px; color: #555; margin-top: 0;">Acesse e gerencie os documentos armazenados de forma segura no Google Drive, organizados por Grupos/Obras.</p>
             
             <div class="fin-req" style="background: #f8f9fa; padding: 15px; border-radius: 6px; border: 1px solid #e1e5eb; margin-bottom: 20px;">
@@ -480,12 +480,12 @@
 
                 perfilUsuario = dadosUsuario.perfil;
                 
-                // Guarda o nome do usuário ativo para usar em arquivos e logs
-                window.nomeUsuarioLogado = dadosUsuario.nome || "Administrador Mestre";
+                // Puxa o nome do banco de dados. Se a conta for muito antiga e não tiver nome, puxa o CPF.
+                let cpfAtual = user.email.split('@')[0];
+                window.nomeUsuarioLogado = dadosUsuario.nome || formatarCPFText(cpfAtual);
                 
                 // Atualiza o topo da tela com o Nome Real
                 document.getElementById('lblUsuario').innerText = window.nomeUsuarioLogado;
-                document.getElementById('lblPerfil').innerText = perfilUsuario;
                 aplicarRestricoesUI();
                 
                 // Proteção para não iniciar os ouvintes de dados várias vezes
@@ -563,9 +563,16 @@
     // --- CORREÇÃO DO SISTEMA DE LOGS ---
     function registrarLog(acao, detalhes) {
         if(!userAutenticado) return;
-        let cpfLog = userAutenticado.email.split('@')[0];
-        // Usa o nome se disponível, caso contrário usa o CPF formatado como segurança
-        let identificadorUser = window.nomeUsuarioLogado || formatarCPFText(cpfLog);
+        // Pega exatamente a variável global que tem o NOME do usuário logado
+        let identificadorUser = window.nomeUsuarioLogado || "Usuário Desconhecido";
+        
+        db.collection("registros_atividades").add({ 
+            dataHora: new Date().toISOString(), 
+            usuario: identificadorUser, 
+            acao: String(acao), 
+            detalhes: String(detalhes) 
+        }).catch(e => console.error("Falha silenciosa no LOG:", e));
+    }
         
         db.collection("registros_atividades").add({ 
             dataHora: new Date().toISOString(), 
@@ -661,8 +668,8 @@
         if(!nome || !link) return alert("Preencha o nome e cole o link do arquivo.");
         if(!link.startsWith("http")) return alert("O link está incorreto. Copie o link completo do Google Drive (começando com https://)");
 
-        let cpfFormatado = formatarCPFText(userAutenticado.email.split('@')[0]);
-        let identificadorUser = window.nomeUsuarioLogado || cpfFormatado;
+        // Garante que vai salvar o NOME na coluna "Adicionado por"
+        let identificadorUser = window.nomeUsuarioLogado || "Usuário Desconhecido";
 
         db.collection("arquivos").add({
             grupo: grupo || "Geral",
