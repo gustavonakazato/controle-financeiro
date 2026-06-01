@@ -560,19 +560,11 @@
         }
     }
 
-    // --- CORREÇÃO DO SISTEMA DE LOGS ---
+   // --- CORREÇÃO DO SISTEMA DE LOGS ---
     function registrarLog(acao, detalhes) {
         if(!userAutenticado) return;
         // Pega exatamente a variável global que tem o NOME do usuário logado
         let identificadorUser = window.nomeUsuarioLogado || "Usuário Desconhecido";
-        
-        db.collection("registros_atividades").add({ 
-            dataHora: new Date().toISOString(), 
-            usuario: identificadorUser, 
-            acao: String(acao), 
-            detalhes: String(detalhes) 
-        }).catch(e => console.error("Falha silenciosa no LOG:", e));
-    }
         
         db.collection("registros_atividades").add({ 
             dataHora: new Date().toISOString(), 
