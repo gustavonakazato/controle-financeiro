@@ -543,11 +543,7 @@
             if(err.code === 'auth/email-already-in-use') alert("Erro: Esse CPF já possui cadastro no sistema.");
             else alert("Erro ao criar usuário: " + err.message);
         });
-    }
-            if(err.code === 'auth/email-already-in-use') alert("Erro: Esse CPF já possui cadastro no sistema.");
-            else alert("Erro ao criar usuário: " + err.message);
-        });
-    }
+     }
 
     function alterarPerfilUser(uid, campo, novoValor) {
         if(confirm(`Tem certeza que deseja alterar o ${campo} deste usuário?`)) {
