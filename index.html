@@ -58,18 +58,19 @@
         .btn-limpar { background-color: #7f8c8d; }
         .btn-acao-topo { background: #34495e; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 5px; flex: 1; white-space: nowrap; }
         
-        /* Caixas de Resumo Congeladas no Topo (Versão Corrigida) */
+        /* Caixas de Resumo Congeladas no Topo (Definitivo) */
         .resumo-container { 
             display: flex; 
             gap: 20px; 
             flex-wrap: wrap;
             width: 100%;
+            align-self: flex-start; /* GARANTE QUE FUNCIONE DENTRO DO FLEXBOX */
             position: -webkit-sticky; /* Essencial para iPhones e Safari */
             position: sticky; 
-            top: 0px; /* Gruda exatamente no teto da tela */
-            z-index: 100; /* Garante que os lançamentos passem por baixo dele */
-            background-color: #e9ecef; /* Tinta de fundo para camuflar a rolagem */
-            padding: 10px 0; 
+            top: 0px; 
+            z-index: 100; 
+            background-color: #e9ecef; 
+            padding: 15px 0 10px 0; 
         }
         .card { flex: 1; min-width: 200px; background: white; padding: 15px; border-radius: 8px; text-align: center; border-bottom: 4px solid #ddd; box-sizing: border-box; }
         .card h4 { margin: 0; font-size: 14px; color: #7f8c8d; }
@@ -159,7 +160,7 @@
 
 <div id="appLogado" style="display: none;">
     <div class="header-top">
-        <span>👤 CPF: <b id="lblUsuario"></b> (<span id="lblPerfil"></span>)</span>
+        <span>👤 Usuário: <b id="lblUsuario"></b> (<span id="lblPerfil"></span>)</span>
         <button onclick="sair()" style="background:none; border:none; color:white; cursor:pointer; font-weight:bold; text-decoration:underline;">Sair / Logout</button>
     </div>
 
@@ -167,7 +168,7 @@
         <button id="btnAbaDashboard" class="aba-btn aba-ativa" onclick="mudarAba('dashboard')">📊 Dashboard</button>
         <button id="btnAbaRelatorios" class="aba-btn" onclick="mudarAba('relatorios')">📈 Resumo Categoria</button>
         <button id="btnAbaMensal" class="aba-btn" onclick="mudarAba('mensal')">📅 Visão Mensal</button>
-        <button id="btnAbaArquivos" class="aba-btn" onclick="mudarAba('arquivos')">📁 Arquivos da Obra</button>
+        <button id="btnAbaArquivos" class="aba-btn" onclick="mudarAba('arquivos')">📁 Arquivos - Download</button>
         <button id="btnAbaConfig" class="aba-btn config-req" onclick="mudarAba('config')">⚙️ Configurações e Admin</button>
     </div>
 
@@ -408,6 +409,7 @@
     
     let userAutenticado = null;
     let perfilUsuario = 'Observador'; 
+    window.nomeUsuarioLogado = ""; // Variavel global do nome
 
     // --- HELPER CPF ---
     function formatarCPFText(cpfStr) {
@@ -465,7 +467,7 @@
 
     function sair() { auth.signOut(); location.reload(); }
 
-function carregarPerfilUsuario(user) {
+    function carregarPerfilUsuario(user) {
         db.collection("usuarios").doc(user.uid).onSnapshot(doc => {
             if (doc.exists) {
                 let dadosUsuario = doc.data();
@@ -478,15 +480,15 @@ function carregarPerfilUsuario(user) {
 
                 perfilUsuario = dadosUsuario.perfil;
                 
-                // Guarda o nome do utilizador ativo para usar nos ficheiros e registos de atividade
+                // Guarda o nome do usuário ativo para usar em arquivos e logs
                 window.nomeUsuarioLogado = dadosUsuario.nome || "Administrador Mestre";
                 
-                // Atualiza o topo do ecrã com o Nome Real
+                // Atualiza o topo da tela com o Nome Real
                 document.getElementById('lblUsuario').innerText = window.nomeUsuarioLogado;
                 document.getElementById('lblPerfil').innerText = perfilUsuario;
                 aplicarRestricoesUI();
                 
-                // Proteção para não iniciar os ouvintes várias vezes
+                // Proteção para não iniciar os ouvintes de dados várias vezes
                 if(!window.ouvintesIniciados) {
                     iniciarOuvintesDeDados();
                     window.ouvintesIniciados = true;
@@ -632,10 +634,9 @@ function carregarPerfilUsuario(user) {
                 document.getElementById('tabelaUsuariosAdmin').innerHTML = h;
             });
 
-            // MUDADO AQUI TAMBÉM DE 'logs' PARA 'registros_atividades'
             document.getElementById('tabelaLogsAdmin').innerHTML = `<tr><td colspan="4" style="text-align:center;">Carregando registros...</td></tr>`;
             
-            // Removido o ".limit(50)" para carregar e exibir todo o histórico
+            // Removido o ".limit(50)" para carregar e exibir todo o histórico de logs
             db.collection("registros_atividades").orderBy("dataHora", "desc").onSnapshot(snap => {
                 let h = "";
                 snap.forEach(doc => {
@@ -970,12 +971,12 @@ function carregarPerfilUsuario(user) {
         registrarLog("EXPORT_PDF", "Exportou arquivo PDF.");
     }
     
-function baixarLogsCSV() {
+    function baixarLogsCSV() {
         if(perfilUsuario !== 'Administrador') return alert("Sem permissão para baixar auditoria.");
         
         db.collection("registros_atividades").orderBy("dataHora", "desc").get().then(snap => {
             // O '\uFEFF' garante que o Excel do Brasil leia os acentos corretamente
-            let csv = "\uFEFFData/Hora;Usuário (CPF);Ação;Detalhes\n";
+            let csv = "\uFEFFData/Hora;Usuário (Nome);Ação;Detalhes\n";
             snap.forEach(doc => {
                 let l = doc.data();
                 let dataFormat = new Date(l.dataHora).toLocaleString('pt-BR');
