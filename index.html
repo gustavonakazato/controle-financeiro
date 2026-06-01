@@ -58,7 +58,18 @@
         .btn-limpar { background-color: #7f8c8d; }
         .btn-acao-topo { background: #34495e; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 5px; flex: 1; white-space: nowrap; }
         
-        .resumo-container { display: flex; gap: 20px; flex-wrap: wrap; }
+        /* Caixas de Resumo Congeladas no Topo */
+        .resumo-container { 
+            display: flex; 
+            gap: 20px; 
+            flex-wrap: wrap; 
+            position: sticky; 
+            top: 0; 
+            z-index: 99; 
+            background-color: #e9ecef; /* Fundo igual ao da página para esconder o texto rolando por trás */
+            padding: 20px 0 15px 0; /* Espaçamento para não colar no teto */
+            margin-top: -20px; /* Compensa o espaçamento superior para manter o alinhamento */
+        }
         .card { flex: 1; min-width: 200px; background: white; padding: 15px; border-radius: 8px; text-align: center; border-bottom: 4px solid #ddd; box-sizing: border-box; }
         .card h4 { margin: 0; font-size: 14px; color: #7f8c8d; }
         .card p { margin: 8px 0 0 0; font-size: 22px; font-weight: bold; }
