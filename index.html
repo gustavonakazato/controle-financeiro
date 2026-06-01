@@ -346,9 +346,10 @@
                     <div style="background: white; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
                         <p style="margin-top:0; font-size:13px; font-weight:bold;">➕ Criar Nova Conta de Acesso:</p>
                         <div style="display:flex; gap:10px; align-items: center; flex-wrap: wrap;">
-                            <input type="text" id="novoUserCpf" placeholder="CPF do Novo Usuário" style="margin:0; font-size:13px; flex: 2; min-width: 150px;">
-                            <input type="password" id="novoUserSenha" placeholder="Senha" style="margin:0; font-size:13px; flex: 2; min-width: 150px;">
-                            <select id="novoUserPerfil" style="margin:0; font-size:13px; flex: 1; min-width: 120px;">
+                            <input type="text" id="novoUserNome" placeholder="Nome Completo" style="margin:0; font-size:13px; flex: 3; min-width: 150px;">
+                            <input type="text" id="novoUserCpf" placeholder="CPF" style="margin:0; font-size:13px; flex: 2; min-width: 110px;">
+                            <input type="password" id="novoUserSenha" placeholder="Senha" style="margin:0; font-size:13px; flex: 2; min-width: 110px;">
+                            <select id="novoUserPerfil" style="margin:0; font-size:13px; flex: 2; min-width: 120px;">
                                 <option value="Observador">Observador</option>
                                 <option value="Financeiro">Financeiro</option>
                                 <option value="Administrador">Administrador</option>
@@ -360,7 +361,7 @@
 
                     <div class="table-responsive" style="margin-bottom:0;">
                         <table class="tabela-simples" style="width: 100%; background: white;">
-                            <thead><tr><th style="text-align:left;">CPF do Usuário</th><th style="text-align:left;">Perfil de Acesso</th><th style="text-align:left;">Status da Conta</th></tr></thead>
+                            <thead><tr><th style="text-align:left;">Nome</th><th style="text-align:left;">CPF</th><th style="text-align:left;">Perfil de Acesso</th><th style="text-align:left;">Status da Conta</th></tr></thead>
                             <tbody id="tabelaUsuariosAdmin"></tbody>
                         </table>
                     </div>
@@ -515,11 +516,12 @@
     }
 
     function criarNovoUsuarioPeloAdmin() {
+        const nome = document.getElementById('novoUserNome').value.trim();
         let cpf = document.getElementById('novoUserCpf').value.replace(/\D/g, '');
         const s = document.getElementById('novoUserSenha').value;
         const p = document.getElementById('novoUserPerfil').value;
 
-        if(cpf.length !== 11 || s.length < 6) return alert("Preencha um CPF válido (11 dígitos) e uma senha de no mínimo 6 caracteres.");
+        if(!nome || cpf.length !== 11 || s.length < 6) return alert("Preencha o Nome, um CPF válido (11 dígitos) e uma senha com no mínimo 6 caracteres.");
 
         const emailFake = cpf + "@sistema.local";
 
@@ -528,15 +530,20 @@
         else { appSecundario = firebase.app("AppSecundario"); }
 
         appSecundario.auth().createUserWithEmailAndPassword(emailFake, s).then(cred => {
-            db.collection("usuarios").doc(cred.user.uid).set({ cpf: cpf, perfil: p, status: "Ativo" });
+            db.collection("usuarios").doc(cred.user.uid).set({ nome: nome, cpf: cpf, perfil: p, status: "Ativo" });
             appSecundario.auth().signOut(); 
             
-            registrarLog("CRIOU_USUARIO", `Criou acesso para o CPF: ${formatarCPFText(cpf)} (${p})`);
-            alert(`Conta criada com sucesso!\n\nCPF: ${formatarCPFText(cpf)}\nPerfil: ${p}`);
+            registrarLog("CRIOU_USUARIO", `Criou acesso para: ${nome} (${formatarCPFText(cpf)})`);
+            alert(`Conta criada com sucesso!\n\nNome: ${nome}\nCPF: ${formatarCPFText(cpf)}\nPerfil: ${p}`);
             
+            document.getElementById('novoUserNome').value = "";
             document.getElementById('novoUserCpf').value = "";
             document.getElementById('novoUserSenha').value = "";
         }).catch(err => {
+            if(err.code === 'auth/email-already-in-use') alert("Erro: Esse CPF já possui cadastro no sistema.");
+            else alert("Erro ao criar usuário: " + err.message);
+        });
+    }
             if(err.code === 'auth/email-already-in-use') alert("Erro: Esse CPF já possui cadastro no sistema.");
             else alert("Erro ao criar usuário: " + err.message);
         });
@@ -602,7 +609,11 @@
                 snap.forEach(doc => {
                     let u = doc.data();
                     let statusAtual = u.status || 'Ativo';
-                    h += `<tr><td>${formatarCPFText(u.cpf)}</td>
+                    let nomeUsuario = u.nome || "Não informado"; // Para os cadastros antigos sem nome
+                    
+                    h += `<tr>
+                    <td><strong>${nomeUsuario}</strong></td>
+                    <td>${formatarCPFText(u.cpf)}</td>
                     <td>
                         <select onchange="alterarPerfilUser('${doc.id}', 'perfil', this.value)" style="padding:4px; font-size:13px; width:100%;">
                             <option value="Observador" ${u.perfil==='Observador'?'selected':''}>Observador</option>
