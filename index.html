@@ -367,8 +367,11 @@
                 </div>
 
                 <div class="admin-area admin-req" style="background: #e8ebef; border-color: #d1d8e0;">
-                    <h3 style="color: #2c3e50; margin-top: 0;">📋 Logs do Sistema (Últimas 50 ações)</h3>
-                    <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+                        <h3 style="color: #2c3e50; margin: 0;">📋 Registros de Atividade do Sistema</h3>
+                        <button class="btn-acao-topo" style="background: #34495e; padding: 6px 12px; font-size: 12px;" onclick="baixarLogsCSV()">📥 Baixar Todos os Logs</button>
+                    </div>
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
                         <table class="tabela-simples" style="width: 100%; background: white;">
                             <thead><tr><th style="text-align:left;">Data/Hora</th><th style="text-align:left;">Usuário (CPF)</th><th style="text-align:left;">Ação</th><th style="text-align:left;">Detalhes</th></tr></thead>
                             <tbody id="tabelaLogsAdmin"></tbody>
@@ -620,16 +623,17 @@
             // MUDADO AQUI TAMBÉM DE 'logs' PARA 'registros_atividades'
             document.getElementById('tabelaLogsAdmin').innerHTML = `<tr><td colspan="4" style="text-align:center;">Carregando registros...</td></tr>`;
             
-            db.collection("registros_atividades").orderBy("dataHora", "desc").limit(50).onSnapshot(snap => {
+            // Removido o ".limit(50)" para carregar e exibir todo o histórico
+            db.collection("registros_atividades").orderBy("dataHora", "desc").onSnapshot(snap => {
                 let h = "";
                 snap.forEach(doc => {
                     let l = doc.data();
                     let dataFormat = new Date(l.dataHora).toLocaleString('pt-BR');
                     h += `<tr><td style="white-space:nowrap;">${dataFormat}</td><td style="white-space:nowrap;">${l.usuario}</td><td><span style="background:#e8f8f5; color:#16a085; padding:3px 6px; border-radius:4px; font-weight:bold; font-size:11px;">${l.acao}</span></td><td>${l.detalhes}</td></tr>`;
                 });
-                document.getElementById('tabelaLogsAdmin').innerHTML = h || '<tr><td colspan="4" style="text-align:center;">Nenhuma atividade registrada.</td></tr>';
+                document.getElementById('tabelaLogsAdmin').innerHTML = h || '<tr><td colspan="4" style="text-align:center; padding:15px; color:#999;">Nenhuma atividade registrada ainda.</td></tr>';
             }, err => {
-                document.getElementById('tabelaLogsAdmin').innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">Erro: Ocorreu um problema ao carregar os logs.</td></tr>`;
+                document.getElementById('tabelaLogsAdmin').innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">Erro ao carregar registros. Desative o AdBlock se estiver ativo.</td></tr>`;
             });
         }
     }
@@ -951,6 +955,27 @@
             document.getElementById('tituloPDF').style.display = 'none'; document.querySelectorAll('td[data-pdf-status]').forEach(el => el.style.display = 'none'); document.querySelectorAll('td:has(select)').forEach(el => el.style.display = 'table-cell');
         });
         registrarLog("EXPORT_PDF", "Exportou arquivo PDF.");
+    }
+    
+function baixarLogsCSV() {
+        if(perfilUsuario !== 'Administrador') return alert("Sem permissão para baixar auditoria.");
+        
+        db.collection("registros_atividades").orderBy("dataHora", "desc").get().then(snap => {
+            // O '\uFEFF' garante que o Excel do Brasil leia os acentos corretamente
+            let csv = "\uFEFFData/Hora;Usuário (CPF);Ação;Detalhes\n";
+            snap.forEach(doc => {
+                let l = doc.data();
+                let dataFormat = new Date(l.dataHora).toLocaleString('pt-BR');
+                csv += `${dataFormat};${l.usuario};${l.acao};${l.detalhes}\n`;
+            });
+            
+            let link = document.createElement("a"); 
+            link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+            link.download = `auditoria_logs_${new Date().toISOString().split('T')[0]}.csv`; 
+            link.click();
+            
+            registrarLog("EXPORT_LOGS", "Baixou o histórico completo de auditoria do sistema em CSV.");
+        }).catch(err => alert("Erro ao baixar logs: " + err.message));
     }
 
     function gerarRelatorios() {
