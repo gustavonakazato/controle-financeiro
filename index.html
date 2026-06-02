@@ -480,16 +480,17 @@
 
                 perfilUsuario = dadosUsuario.perfil;
                 
-                // Puxa o nome do banco de dados. Se a conta for muito antiga e não tiver nome, puxa o CPF.
+                // Puxa o nome do banco de dados ou usa o CPF se for conta antiga
                 let cpfAtual = user.email.split('@')[0];
                 window.nomeUsuarioLogado = dadosUsuario.nome || formatarCPFText(cpfAtual);
                 
-                // Atualiza o topo da tela com o Nome Real
+                // Atualiza o topo da tela com o Nome Real e o Perfil!
                 document.getElementById('lblUsuario').innerText = window.nomeUsuarioLogado;
-                document.getElementById('lblPerfil').innerText = perfilUsuario; // <-- Esta linha devolve o seu perfil para os parênteses!
+                document.getElementById('lblPerfil').innerText = perfilUsuario; 
+                
                 aplicarRestricoesUI();
                 
-                // Proteção para não iniciar os ouvintes de dados várias vezes
+                // Proteção para não iniciar os ouvintes várias vezes
                 if(!window.ouvintesIniciados) {
                     iniciarOuvintesDeDados();
                     window.ouvintesIniciados = true;
