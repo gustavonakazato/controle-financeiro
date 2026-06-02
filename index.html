@@ -486,6 +486,7 @@
                 
                 // Atualiza o topo da tela com o Nome Real
                 document.getElementById('lblUsuario').innerText = window.nomeUsuarioLogado;
+                document.getElementById('lblPerfil').innerText = perfilUsuario; // <-- Esta linha devolve o seu perfil para os parênteses!
                 aplicarRestricoesUI();
                 
                 // Proteção para não iniciar os ouvintes de dados várias vezes
