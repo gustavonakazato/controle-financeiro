@@ -89,6 +89,13 @@
         .vence-hoje { background-color: #fff3cd; }
         .btn-acao { border: none; background: none; cursor: pointer; font-size: 16px; padding: 4px; border-radius: 4px; }
         .btn-acao:hover { background: #eee; }
+        /* ESTILOS DO POP-UP DE VENCIDOS */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 10000; }
+        .modal-box { background: white; padding: 25px; border-radius: 8px; width: 90%; max-width: 500px; box-shadow: 0 5px 20px rgba(0,0,0,0.5); max-height: 80vh; display: flex; flex-direction: column; }
+        .modal-box h3 { color: #e74c3c; margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .lista-vencidos { overflow-y: auto; margin-bottom: 15px; flex: 1; }
+        .item-vencido { background: #fff3cd; border-left: 4px solid #e74c3c; padding: 10px; margin-bottom: 8px; border-radius: 4px; font-size: 13px; }
+        .tag-socio { background: #8e44ad; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-left: 8px; vertical-align: middle; }
 
         .sub-navbar { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; flex-wrap: wrap; }
         .sub-aba-btn { background: none; border: none; font-size: 15px; font-weight: bold; color: #7f8c8d; cursor: pointer; padding: 8px 15px; border-radius: 4px; flex: 1; min-width: 120px; text-align: center; }
@@ -198,6 +205,12 @@
                 </div>
                 
                 <div class="form-group"><label>Status Inicial:</label><select id="cadStatus"></select></div>
+                
+                <div class="form-group" style="background: #f8f9fa; padding: 10px; border-radius: 4px; border: 1px solid #e1e5eb;">
+                    <label style="display: flex; align-items: center; gap: 8px; margin: 0; cursor: pointer; color: #8e44ad;">
+                        <input type="checkbox" id="cadSocio" style="width: auto;"> 🤝 Referente a Sócio / Investidor
+                    </label>
+                </div>
                 
                 <div style="display: flex; gap: 10px;">
                     <button class="btn" id="btnSalvar" style="flex: 2; margin-top: 10px;" onclick="adicionarLancamento()">Registrar</button>
@@ -384,6 +397,14 @@
         </div>
     </div>
 </div>
+<div id="modalVencidos" class="modal-overlay">
+    <div class="modal-box">
+        <h3>⚠️ Atenção: Lançamentos Vencidos <button onclick="fecharModalVencidos()" style="background:none; border:none; font-size:18px; cursor:pointer;">❌</button></h3>
+        <p style="font-size:13px; color:#555; margin-top:0;">Os seguintes itens já passaram da data e ainda não constam como "Efetuados":</p>
+        <div id="conteudoVencidos" class="lista-vencidos"></div>
+        <button class="btn" style="background:#34495e; margin-top:0;" onclick="fecharModalVencidos()">Ciente, fechar aviso</button>
+    </div>
+</div>    
 
 <script>
     // --- FIREBASE CONFIG ---
@@ -756,6 +777,7 @@
     
     function formata(v) { return v.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}); }
     function formataData(d) { if(!d) return ""; return d.split('-').reverse().join('/'); }
+    function fecharModalVencidos() { document.getElementById('modalVencidos').style.display = 'none'; }
 
     function carregarListas() {
         document.getElementById("cadCat").innerHTML = categorias.map(c => `<option value="${c}">${c}</option>`).join('');
@@ -812,6 +834,7 @@
         const v = parseFloat(document.getElementById("cadValor").value), dt = document.getElementById("cadData").value;
         const t = document.getElementById("cadTipo").value, st = document.getElementById("cadStatus").value;
         const pag = document.getElementById("cadPagamento").value;
+        const isSocio = document.getElementById("cadSocio").checked;
 
         if (!d || isNaN(v) || !dt) return alert("Preencha todos os campos obrigatórios!");
 
@@ -846,6 +869,7 @@
         document.getElementById("cadValor").value = l.valor; document.getElementById("cadData").value = l.data; 
         document.getElementById("cadTipo").value = l.tipo; document.getElementById("cadStatus").value = l.status; 
         document.getElementById("cadPagamento").value = "À Vista"; toggleOpcoesPagamento();
+        document.getElementById("cadSocio").checked = l.socio || false;
         
         document.getElementById("tituloCadastro").innerText = "✏️ Editando"; 
         document.getElementById("btnSalvar").innerText = "Salvar Alterações"; 
@@ -858,6 +882,7 @@
         document.getElementById("editId").value = ""; document.getElementById("cadDesc").value = ""; document.getElementById("cadValor").value = ""; document.getElementById("cadData").value = "";
         document.getElementById("cadPagamento").value = "À Vista"; toggleOpcoesPagamento(); document.getElementById("cadTipo").value = "Débito";
         document.getElementById("tituloCadastro").innerText = "💸 Registro"; document.getElementById("btnSalvar").innerText = "Registrar"; document.getElementById("btnSalvar").classList.remove("btn-editando"); 
+        document.getElementById("cadSocio").checked = false;
     }
 
     function atualizarTela() {
@@ -887,10 +912,11 @@
 
             let selectStatus = perfilUsuario === 'Observador' ? l.status : `<select onchange="alterarStatus('${l.id}', this.value)" style="width: 100%; min-width: 100px; padding: 6px 4px; font-size: 13px; border-radius: 4px;"><option value="${l.status}" selected>${l.status}</option>${statusLista.filter(s=>s!=l.status).map(s=>`<option value="${s}">${s}</option>`).join('')}</select>`;
             let acoesHtml = perfilUsuario === 'Observador' ? '' : `<td style="text-align:center; white-space:nowrap;" data-html2canvas-ignore class="fin-req"><button class="btn-acao" onclick="editar('${l.id}')">✏️</button><button class="btn-acao" onclick="remover('${l.id}')">🗑️</button></td>`;
+            let tagSocioVisual = l.socio ? `<span class="tag-socio">🤝 Sócio/Investidor</span>` : '';
 
             tr.innerHTML = `
                 <td style="white-space:nowrap;"><strong>${iconeData} ${formataData(l.data)}</strong></td>
-                <td><strong>${l.desc}</strong><br><small style="color:#7f8c8d">📁 ${l.categoria} | 🏦 ${l.conta || "Geral"}</small></td>
+                <td><strong>${l.desc}</strong> ${tagSocioVisual}<br><small style="color:#7f8c8d">📁 ${l.categoria} | 🏦 ${l.conta || "Geral"}</small></td>
                 <td style="color:${l.tipo==='Débito'?'#e74c3c':'#27ae60'};font-weight:bold">${formata(l.valor)}</td>
                 <td>${l.tipo}</td>
                 <td data-html2canvas-ignore>${selectStatus}</td>
@@ -902,6 +928,25 @@
         document.getElementById("resSaldo").innerText = formata(tEnt - tSai); document.getElementById("resSaldo").style.color = (tEnt - tSai) >= 0 ? "#2980b9" : "#e74c3c";
         
         if(perfilUsuario === 'Observador') document.querySelectorAll('.fin-req').forEach(el => el.style.display = 'none');
+        // LOGICA DO POP-UP DE VENCIDOS (Apenas dispara 1 vez ao abrir)
+        if (!window.alertaVencidosMostrado && perfilUsuario !== 'Observador') {
+            let itensVencidos = lancamentos.filter(l => l.data < hoje && !l.status.toLowerCase().includes("efetuada") && !l.status.toLowerCase().includes("pago"));
+            
+            if (itensVencidos.length > 0) {
+                let htmlVencidos = "";
+                itensVencidos.sort((a,b) => new Date(a.data) - new Date(b.data)).forEach(v => {
+                    let corV = v.tipo === "Crédito" ? "#27ae60" : "#c0392b";
+                    let sinal = v.tipo === "Crédito" ? "Recebimento Atrasado" : "Pagamento Atrasado";
+                    htmlVencidos += `<div class="item-vencido">
+                        <strong>${v.desc}</strong> <br>
+                        <span style="color:${corV}">Vencimento: ${formataData(v.data)} | Valor: ${formata(v.valor)} (${sinal})</span>
+                    </div>`;
+                });
+                document.getElementById('conteudoVencidos').innerHTML = htmlVencidos;
+                document.getElementById('modalVencidos').style.display = 'flex';
+            }
+            window.alertaVencidosMostrado = true;
+        }
     }
 
     function alterarStatus(id, st) { 
