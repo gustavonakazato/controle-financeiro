@@ -64,8 +64,8 @@
             gap: 20px; 
             flex-wrap: wrap;
             width: 100%;
-            align-self: flex-start; /* GARANTE QUE FUNCIONE DENTRO DO FLEXBOX */
-            position: -webkit-sticky; /* Essencial para iPhones e Safari */
+            align-self: flex-start;
+            position: -webkit-sticky;
             position: sticky; 
             top: 0px; 
             z-index: 100; 
@@ -89,6 +89,7 @@
         .vence-hoje { background-color: #fff3cd; }
         .btn-acao { border: none; background: none; cursor: pointer; font-size: 16px; padding: 4px; border-radius: 4px; }
         .btn-acao:hover { background: #eee; }
+
         /* ESTILOS DO POP-UP DE VENCIDOS E TAG DE SÓCIO */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 10000; }
         .modal-box { background: white; padding: 25px; border-radius: 8px; width: 90%; max-width: 500px; box-shadow: 0 5px 20px rgba(0,0,0,0.5); max-height: 80vh; display: flex; flex-direction: column; }
@@ -217,12 +218,6 @@
                 </div>
                 
                 <div class="form-group"><label>Status Inicial:</label><select id="cadStatus"></select></div>
-                
-                <div class="form-group" style="background: #f8f9fa; padding: 10px; border-radius: 4px; border: 1px solid #e1e5eb;">
-                    <label style="display: flex; align-items: center; gap: 8px; margin: 0; cursor: pointer; color: #8e44ad;">
-                        <input type="checkbox" id="cadSocio" style="width: auto;"> 🤝 Referente a Sócio / Investidor
-                    </label>
-                </div>
                 
                 <div style="display: flex; gap: 10px;">
                     <button class="btn" id="btnSalvar" style="flex: 2; margin-top: 10px;" onclick="adicionarLancamento()">Registrar</button>
@@ -430,6 +425,7 @@
         </div>
     </div>
 </div>
+
 <div id="modalVencidos" class="modal-overlay">
     <div class="modal-box">
         <h3>⚠️ Atenção: Lançamentos Vencidos <button onclick="fecharModalVencidos()" style="background:none; border:none; font-size:18px; cursor:pointer;">❌</button></h3>
@@ -463,7 +459,8 @@
     
     let userAutenticado = null;
     let perfilUsuario = 'Observador'; 
-    window.nomeUsuarioLogado = ""; // Variavel global do nome
+    window.nomeUsuarioLogado = ""; 
+    window.alertaVencidosMostrado = false;
 
     // --- HELPER CPF ---
     function formatarCPFText(cpfStr) {
@@ -534,17 +531,14 @@
 
                 perfilUsuario = dadosUsuario.perfil;
                 
-                // Puxa o nome do banco de dados ou usa o CPF se for conta antiga
                 let cpfAtual = user.email.split('@')[0];
                 window.nomeUsuarioLogado = dadosUsuario.nome || formatarCPFText(cpfAtual);
                 
-                // Atualiza o topo da tela com o Nome Real e o Perfil!
                 document.getElementById('lblUsuario').innerText = window.nomeUsuarioLogado;
                 document.getElementById('lblPerfil').innerText = perfilUsuario; 
                 
                 aplicarRestricoesUI();
                 
-                // Proteção para não iniciar os ouvintes várias vezes
                 if(!window.ouvintesIniciados) {
                     iniciarOuvintesDeDados();
                     window.ouvintesIniciados = true;
@@ -616,10 +610,8 @@
         }
     }
 
-   // --- CORREÇÃO DO SISTEMA DE LOGS ---
     function registrarLog(acao, detalhes) {
         if(!userAutenticado) return;
-        // Pega exatamente a variável global que tem o NOME do usuário logado
         let identificadorUser = window.nomeUsuarioLogado || "Usuário Desconhecido";
         
         db.collection("registros_atividades").add({ 
@@ -630,7 +622,6 @@
         }).catch(e => console.error("Falha silenciosa no LOG:", e));
     }
 
-    // --- OUVINTES DO BANCO DE DADOS ---
     function iniciarOuvintesDeDados() {
         db.collection("config").doc("listas").onSnapshot(doc => {
             if (doc.exists) { 
@@ -667,7 +658,7 @@
                 snap.forEach(doc => {
                     let u = doc.data();
                     let statusAtual = u.status || 'Ativo';
-                    let nomeUsuario = u.nome || "Não informado"; // Para os cadastros antigos sem nome
+                    let nomeUsuario = u.nome || "Não informado"; 
                     
                     h += `<tr>
                     <td><strong>${nomeUsuario}</strong></td>
@@ -691,7 +682,6 @@
 
             document.getElementById('tabelaLogsAdmin').innerHTML = `<tr><td colspan="4" style="text-align:center;">Carregando registros...</td></tr>`;
             
-            // Removido o ".limit(50)" para carregar e exibir todo o histórico de logs
             db.collection("registros_atividades").orderBy("dataHora", "desc").onSnapshot(snap => {
                 let h = "";
                 snap.forEach(doc => {
@@ -706,7 +696,6 @@
         }
     }
 
-    // --- FUNÇÕES DA ABA DE ARQUIVOS DO DRIVE ---
     function adicionarArquivo() {
         if(perfilUsuario === 'Observador') return alert("Sem permissão");
         let grupo = document.getElementById("arqGrupo").value;
@@ -716,7 +705,6 @@
         if(!nome || !link) return alert("Preencha o nome e cole o link do arquivo.");
         if(!link.startsWith("http")) return alert("O link está incorreto. Copie o link completo do Google Drive (começando com https://)");
 
-        // Garante que vai salvar o NOME na coluna "Adicionado por"
         let identificadorUser = window.nomeUsuarioLogado || "Usuário Desconhecido";
 
         db.collection("arquivos").add({
@@ -771,7 +759,6 @@
         }
     }
 
-    // --- FUNÇÕES DE NAVEGAÇÃO E REGRAS GERAIS ---
     function salvarConfigNaNuvem() {
         if(perfilUsuario === 'Observador') return;
         db.collection("config").doc("listas").set({ 
@@ -900,39 +887,6 @@
         }
         limparFormulario(); 
     }
-        if(perfilUsuario === 'Observador') return alert("Sem permissão");
-        const id = document.getElementById("editId").value;
-        const d = document.getElementById("cadDesc").value, c = document.getElementById("cadCat").value;
-        const contaRef = document.getElementById("cadConta").value || "Geral";
-        const v = parseFloat(document.getElementById("cadValor").value), dt = document.getElementById("cadData").value;
-        const t = document.getElementById("cadTipo").value, st = document.getElementById("cadStatus").value;
-        const pag = document.getElementById("cadPagamento").value;
-        const isSocio = document.getElementById("cadSocio").checked;
-
-        if (!d || isNaN(v) || !dt) return alert("Preencha todos os campos obrigatórios!");
-
-        if (id) {
-            db.collection("lancamentos").doc(id).update({ desc: d, categoria: c, conta: contaRef, valor: v, data: dt, tipo: t, status: st });
-            registrarLog("EDITOU", `Editou lançamento: ${d} | R$${v}`);
-        } else if (pag === "Parcelado" || pag === "Recorrente") {
-            const n = parseInt(document.getElementById("numRepeticoes").value);
-            const valorCalculado = (pag === "Parcelado") ? (v / n) : v;
-            let batch = db.batch();
-            for (let i = 0; i < n; i++) {
-                let dataVenc = new Date(dt + "T00:00:00"); dataVenc.setMonth(dataVenc.getMonth() + i);
-                let descFinal = (pag === "Parcelado") ? `${d} (${i+1}/${n})` : d;
-                let novoId = (Date.now() + i).toString();
-                batch.set(db.collection("lancamentos").doc(novoId), { id: novoId, desc: descFinal, categoria: c, conta: contaRef, valor: valorCalculado, data: dataVenc.toISOString().split('T')[0], tipo: t, status: st });
-            }
-            batch.commit();
-            registrarLog("ADC_LOTE", `Adicionou lote (${pag}): ${d} | R$${v} total`);
-        } else {
-            let novoId = Date.now().toString();
-            db.collection("lancamentos").doc(novoId).set({ id: novoId, desc: d, categoria: c, conta: contaRef, valor: v, data: dt, tipo: t, status: st });
-            registrarLog("ADICIONOU", `Novo lançamento: ${d} | R$${v}`);
-        }
-        limparFormulario(); 
-    }
 
     function editar(id) {
         if(perfilUsuario === 'Observador') return;
@@ -942,10 +896,10 @@
         document.getElementById("cadValor").value = l.valor; document.getElementById("cadData").value = l.data; 
         document.getElementById("cadTipo").value = l.tipo; document.getElementById("cadStatus").value = l.status; 
         document.getElementById("cadPagamento").value = "À Vista"; toggleOpcoesPagamento();
-        document.getElementById("cadSocio").checked = l.socio || false;
         
         toggleTipo();
         if(l.tipo === "Crédito") document.getElementById("cadSocio").checked = l.socio || false;
+        
         document.getElementById("tituloCadastro").innerText = "✏️ Editando"; 
         document.getElementById("btnSalvar").innerText = "Salvar Alterações"; 
         document.getElementById("btnSalvar").classList.add("btn-editando");
@@ -956,10 +910,11 @@
     function limparFormulario() {
         document.getElementById("editId").value = ""; document.getElementById("cadDesc").value = ""; document.getElementById("cadValor").value = ""; document.getElementById("cadData").value = "";
         document.getElementById("cadPagamento").value = "À Vista"; toggleOpcoesPagamento(); document.getElementById("cadTipo").value = "Débito";
-        document.getElementById("tituloCadastro").innerText = "💸 Registro"; document.getElementById("btnSalvar").innerText = "Registrar"; document.getElementById("btnSalvar").classList.remove("btn-editando"); 
+        
         toggleTipo();
         document.getElementById("cadSocio").checked = false;
-                
+
+        document.getElementById("tituloCadastro").innerText = "💸 Registro"; document.getElementById("btnSalvar").innerText = "Registrar"; document.getElementById("btnSalvar").classList.remove("btn-editando"); 
     }
 
     function atualizarTela() {
@@ -989,7 +944,8 @@
 
             let selectStatus = perfilUsuario === 'Observador' ? l.status : `<select onchange="alterarStatus('${l.id}', this.value)" style="width: 100%; min-width: 100px; padding: 6px 4px; font-size: 13px; border-radius: 4px;"><option value="${l.status}" selected>${l.status}</option>${statusLista.filter(s=>s!=l.status).map(s=>`<option value="${s}">${s}</option>`).join('')}</select>`;
             let acoesHtml = perfilUsuario === 'Observador' ? '' : `<td style="text-align:center; white-space:nowrap;" data-html2canvas-ignore class="fin-req"><button class="btn-acao" onclick="editar('${l.id}')">✏️</button><button class="btn-acao" onclick="remover('${l.id}')">🗑️</button></td>`;
-            let tagSocioVisual = l.socio ? `<span class="tag-socio">🤝 Sócio/Investidor</span>` : '';
+            
+            let tagSocioVisual = l.socio ? `<span style="background: #8e44ad; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-left: 8px;">🤝 Aporte (${l.categoria})</span>` : '';
 
             tr.innerHTML = `
                 <td style="white-space:nowrap;"><strong>${iconeData} ${formataData(l.data)}</strong></td>
@@ -1005,25 +961,7 @@
         document.getElementById("resSaldo").innerText = formata(tEnt - tSai); document.getElementById("resSaldo").style.color = (tEnt - tSai) >= 0 ? "#2980b9" : "#e74c3c";
         
         if(perfilUsuario === 'Observador') document.querySelectorAll('.fin-req').forEach(el => el.style.display = 'none');
-        // LOGICA DO POP-UP DE VENCIDOS (Apenas dispara 1 vez ao abrir)
-        if (!window.alertaVencidosMostrado && perfilUsuario !== 'Observador') {
-            let itensVencidos = lancamentos.filter(l => l.data < hoje && !l.status.toLowerCase().includes("efetuada") && !l.status.toLowerCase().includes("pago"));
-            
-            if (itensVencidos.length > 0) {
-                let htmlVencidos = "";
-                itensVencidos.sort((a,b) => new Date(a.data) - new Date(b.data)).forEach(v => {
-                    let corV = v.tipo === "Crédito" ? "#27ae60" : "#c0392b";
-                    let sinal = v.tipo === "Crédito" ? "Recebimento Atrasado" : "Pagamento Atrasado";
-                    htmlVencidos += `<div class="item-vencido">
-                        <strong>${v.desc}</strong> <br>
-                        <span style="color:${corV}">Vencimento: ${formataData(v.data)} | Valor: ${formata(v.valor)} (${sinal})</span>
-                    </div>`;
-                });
-                document.getElementById('conteudoVencidos').innerHTML = htmlVencidos;
-                document.getElementById('modalVencidos').style.display = 'flex';
-            }
-            window.alertaVencidosMostrado = true;
-        }
+        
         // DISPARO DO POP-UP DE VENCIDOS (Apenas 1x por login)
         if (!window.alertaVencidosMostrado && perfilUsuario !== 'Observador') {
             let itensVencidos = lancamentos.filter(l => l.data < hoje && !l.status.toLowerCase().includes("efetuada") && !l.status.toLowerCase().includes("pago"));
@@ -1032,7 +970,7 @@
                 let htmlVencidos = "";
                 itensVencidos.sort((a,b) => new Date(a.data) - new Date(b.data)).forEach(v => {
                     let corV = v.tipo === "Crédito" ? "#27ae60" : "#c0392b";
-                    let sinal = v.tipo === "Crédito" ? "Recebimento" : "Pagamento";
+                    let sinal = v.tipo === "Crédito" ? "Recebimento Atrasado" : "Pagamento Atrasado";
                     htmlVencidos += `<div class="item-vencido">
                         <strong>${v.desc}</strong> <br>
                         <span style="color:${corV}">Vencimento: ${formataData(v.data)} | Valor: ${formata(v.valor)} (${sinal})</span>
@@ -1117,7 +1055,6 @@
         if(perfilUsuario !== 'Administrador') return alert("Sem permissão para baixar auditoria.");
         
         db.collection("registros_atividades").orderBy("dataHora", "desc").get().then(snap => {
-            // O '\uFEFF' garante que o Excel do Brasil leia os acentos corretamente
             let csv = "\uFEFFData/Hora;Usuário (Nome);Ação;Detalhes\n";
             snap.forEach(doc => {
                 let l = doc.data();
@@ -1133,8 +1070,6 @@
             registrarLog("EXPORT_LOGS", "Baixou o histórico completo de auditoria do sistema em CSV.");
         }).catch(err => alert("Erro ao baixar logs: " + err.message));
     }
-
-    function fecharModalVencidos() { document.getElementById('modalVencidos').style.display = 'none'; }
 
     function exportarPDFGenerico(idContainer, nomeArquivo) {
         const elemento = document.getElementById(idContainer);
@@ -1154,7 +1089,6 @@
             let isEfetuada = l.status.toLowerCase().includes("efetuada") || l.status.toLowerCase().includes("pago");
             let cat = l.categoria;
 
-            // LÓGICA DO SÓCIO: Pega a CATEGORIA como nome do Sócio!
             if (l.tipo === "Crédito" && isEfetuada && l.socio) {
                 let nomeSocio = l.categoria || "Não Identificado";
                 aportesPorSocio[nomeSocio] = (aportesPorSocio[nomeSocio] || 0) + l.valor;
@@ -1170,7 +1104,6 @@
         const desenhar = (obj, idCont) => { let html = "", soma = 0; for(let c in obj) { html += `<div class="rel-linha"><span>${c}</span><span>${formata(obj[c])}</span></div>`; soma += obj[c]; } if(html === "") html = "<p style='color:#999; font-size:13px;'>Sem registros.</p>"; else html += `<div class="rel-linha"><span>TOTAL</span><span>${formata(soma)}</span></div>`; document.getElementById(idCont).innerHTML = html; };
         desenhar(totais.ce, "relCreditoEfetuado"); desenhar(totais.de, "relDebitoEfetuado"); desenhar(totais.cv, "relCreditoVencer"); desenhar(totais.dv, "relDebitoVencer");
 
-        // DESENHAR O QUADRO INTELIGENTE DE APORTES
         let htmlAportes = "";
         if (totalAportes > 0) {
             let maiorAporte = Math.max(...Object.values(aportesPorSocio));
