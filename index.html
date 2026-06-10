@@ -89,13 +89,12 @@
         .vence-hoje { background-color: #fff3cd; }
         .btn-acao { border: none; background: none; cursor: pointer; font-size: 16px; padding: 4px; border-radius: 4px; }
         .btn-acao:hover { background: #eee; }
-        /* ESTILOS DO POP-UP DE VENCIDOS */
+        /* ESTILOS DO POP-UP DE VENCIDOS E TAG DE SÓCIO */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 10000; }
         .modal-box { background: white; padding: 25px; border-radius: 8px; width: 90%; max-width: 500px; box-shadow: 0 5px 20px rgba(0,0,0,0.5); max-height: 80vh; display: flex; flex-direction: column; }
         .modal-box h3 { color: #e74c3c; margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         .lista-vencidos { overflow-y: auto; margin-bottom: 15px; flex: 1; }
         .item-vencido { background: #fff3cd; border-left: 4px solid #e74c3c; padding: 10px; margin-bottom: 8px; border-radius: 4px; font-size: 13px; }
-        .tag-socio { background: #8e44ad; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-left: 8px; vertical-align: middle; }
 
         .sub-navbar { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; flex-wrap: wrap; }
         .sub-aba-btn { background: none; border: none; font-size: 15px; font-weight: bold; color: #7f8c8d; cursor: pointer; padding: 8px 15px; border-radius: 4px; flex: 1; min-width: 120px; text-align: center; }
@@ -197,7 +196,20 @@
                     <div class="form-group" style="flex: 1;"><label>Data Início:</label><input type="date" id="cadData"></div>
                 </div>
                 
-                <div class="form-group"><label>Tipo:</label><select id="cadTipo"><option value="Débito">Débito (Saída)</option><option value="Crédito">Crédito (Entrada)</option></select></div>
+                <div class="form-group">
+                    <label>Tipo:</label>
+                    <select id="cadTipo" onchange="toggleTipo()">
+                        <option value="Débito">Débito (Saída)</option>
+                        <option value="Crédito">Crédito (Entrada)</option>
+                    </select>
+                </div>
+                
+                <div id="containerSocio" class="form-group" style="display: none; background: #f8f9fa; padding: 10px; border-radius: 4px; border: 1px solid #e1e5eb;">
+                    <label style="display: flex; align-items: center; gap: 8px; margin: 0; cursor: pointer; color: #8e44ad; font-weight: bold;">
+                        <input type="checkbox" id="cadSocio" style="width: auto;"> 🤝 Aporte de Sócio / Investidor
+                    </label>
+                </div>
+
                 <div class="form-group"><label>Pagamento:</label><select id="cadPagamento" onchange="toggleOpcoesPagamento()"><option value="À Vista">À Vista</option><option value="Parcelado">Parcelado</option><option value="Recorrente">Recorrente</option></select></div>
                 
                 <div id="caixaOpcoesPagamento" style="display: none; background: #f0f4f8; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
@@ -265,11 +277,32 @@
                 <div style="flex: 1; min-width: 150px;"><label>Período De:</label><input type="date" id="rDataInicio" onchange="gerarRelatorios()"></div>
                 <div style="flex: 1; min-width: 150px;"><label>Até:</label><input type="date" id="rDataFim" onchange="gerarRelatorios()"></div>
             </div>
+
+            <div class="rel-box" id="boxExportAportes" style="margin-bottom: 20px; border-left: 5px solid #8e44ad; background: #faf9fc;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px dashed #ccc; padding-bottom: 8px;">
+                    <h3 style="color: #8e44ad; font-size: 18px; margin: 0;">🤝 Quadro de Aportes (Sócios / Investidores)</h3>
+                    <button class="btn-acao-topo" style="padding: 5px 12px; font-size: 12px; background: #34495e;" onclick="exportarPDFGenerico('boxExportAportes', 'Relatorio_Aportes')" data-html2canvas-ignore>📄 Baixar PDF do Quadro</button>
+                </div>
+                <div id="relAportesSocios"></div>
+            </div>
+
             <div class="relatorios-grid">
-                <div class="rel-box"><h3 style="color: #27ae60; font-size: 15px;">✅ Entradas (Efetuadas)</h3><div id="relCreditoEfetuado"></div></div>
-                <div class="rel-box"><h3 style="color: #e74c3c; font-size: 15px;">✅ Saídas (Efetuadas)</h3><div id="relDebitoEfetuado"></div></div>
-                <div class="rel-box"><h3 style="color: #f39c12; font-size: 15px;">⏳ A Receber (A Vencer)</h3><div id="relCreditoVencer"></div></div>
-                <div class="rel-box"><h3 style="color: #c0392b; font-size: 15px;">⏳ A Pagar (A Vencer)</h3><div id="relDebitoVencer"></div></div>
+                <div class="rel-box" id="boxExportEntradasEfet">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px dashed #ccc; padding-bottom: 5px;"><h3 style="color: #27ae60; font-size: 15px; margin: 0;">✅ Entradas (Efetuadas)</h3><button class="btn-acao-topo" style="padding: 3px 8px; font-size: 11px;" onclick="exportarPDFGenerico('boxExportEntradasEfet', 'Entradas_Efetuadas')" data-html2canvas-ignore>📄 PDF</button></div>
+                    <div id="relCreditoEfetuado"></div>
+                </div>
+                <div class="rel-box" id="boxExportSaidasEfet">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px dashed #ccc; padding-bottom: 5px;"><h3 style="color: #e74c3c; font-size: 15px; margin: 0;">✅ Saídas (Efetuadas)</h3><button class="btn-acao-topo" style="padding: 3px 8px; font-size: 11px;" onclick="exportarPDFGenerico('boxExportSaidasEfet', 'Saidas_Efetuadas')" data-html2canvas-ignore>📄 PDF</button></div>
+                    <div id="relDebitoEfetuado"></div>
+                </div>
+                <div class="rel-box" id="boxExportEntradasVencer">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px dashed #ccc; padding-bottom: 5px;"><h3 style="color: #f39c12; font-size: 15px; margin: 0;">⏳ A Receber (Vencer)</h3><button class="btn-acao-topo" style="padding: 3px 8px; font-size: 11px;" onclick="exportarPDFGenerico('boxExportEntradasVencer', 'A_Receber_Vencer')" data-html2canvas-ignore>📄 PDF</button></div>
+                    <div id="relCreditoVencer"></div>
+                </div>
+                <div class="rel-box" id="boxExportSaidasVencer">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px dashed #ccc; padding-bottom: 5px;"><h3 style="color: #c0392b; font-size: 15px; margin: 0;">⏳ A Pagar (Vencer)</h3><button class="btn-acao-topo" style="padding: 3px 8px; font-size: 11px;" onclick="exportarPDFGenerico('boxExportSaidasVencer', 'A_Pagar_Vencer')" data-html2canvas-ignore>📄 PDF</button></div>
+                    <div id="relDebitoVencer"></div>
+                </div>
             </div>
         </div>
 
@@ -826,7 +859,47 @@
         if (t === "Parcelado") { c.style.display = "block"; l.innerText = "Nº de Parcelas:"; } else if (t === "Recorrente") { c.style.display = "block"; l.innerText = "Meses projetados:"; } else { c.style.display = "none"; }
     }
 
+    function toggleTipo() {
+        let isCredito = document.getElementById("cadTipo").value === "Crédito";
+        document.getElementById("containerSocio").style.display = isCredito ? "block" : "none";
+        if(!isCredito) document.getElementById("cadSocio").checked = false;
+    }
+
     function adicionarLancamento() {
+        if(perfilUsuario === 'Observador') return alert("Sem permissão");
+        const id = document.getElementById("editId").value;
+        const d = document.getElementById("cadDesc").value, c = document.getElementById("cadCat").value;
+        const contaRef = document.getElementById("cadConta").value || "Geral";
+        const v = parseFloat(document.getElementById("cadValor").value), dt = document.getElementById("cadData").value;
+        const t = document.getElementById("cadTipo").value, st = document.getElementById("cadStatus").value;
+        const pag = document.getElementById("cadPagamento").value;
+
+        const isSocio = (t === "Crédito") ? document.getElementById("cadSocio").checked : false;
+
+        if (!d || isNaN(v) || !dt) return alert("Preencha todos os campos obrigatórios!");
+
+        if (id) {
+            db.collection("lancamentos").doc(id).update({ desc: d, categoria: c, conta: contaRef, valor: v, data: dt, tipo: t, status: st, socio: isSocio });
+            registrarLog("EDITOU", `Editou lançamento: ${d} | R$${v}`);
+        } else if (pag === "Parcelado" || pag === "Recorrente") {
+            const n = parseInt(document.getElementById("numRepeticoes").value);
+            const valorCalculado = (pag === "Parcelado") ? (v / n) : v;
+            let batch = db.batch();
+            for (let i = 0; i < n; i++) {
+                let dataVenc = new Date(dt + "T00:00:00"); dataVenc.setMonth(dataVenc.getMonth() + i);
+                let descFinal = (pag === "Parcelado") ? `${d} (${i+1}/${n})` : d;
+                let novoId = (Date.now() + i).toString();
+                batch.set(db.collection("lancamentos").doc(novoId), { id: novoId, desc: descFinal, categoria: c, conta: contaRef, valor: valorCalculado, data: dataVenc.toISOString().split('T')[0], tipo: t, status: st, socio: isSocio });
+            }
+            batch.commit();
+            registrarLog("ADC_LOTE", `Adicionou lote (${pag}): ${d} | R$${v} total`);
+        } else {
+            let novoId = Date.now().toString();
+            db.collection("lancamentos").doc(novoId).set({ id: novoId, desc: d, categoria: c, conta: contaRef, valor: v, data: dt, tipo: t, status: st, socio: isSocio });
+            registrarLog("ADICIONOU", `Novo lançamento: ${d} | R$${v}`);
+        }
+        limparFormulario(); 
+    }
         if(perfilUsuario === 'Observador') return alert("Sem permissão");
         const id = document.getElementById("editId").value;
         const d = document.getElementById("cadDesc").value, c = document.getElementById("cadCat").value;
@@ -871,6 +944,8 @@
         document.getElementById("cadPagamento").value = "À Vista"; toggleOpcoesPagamento();
         document.getElementById("cadSocio").checked = l.socio || false;
         
+        toggleTipo();
+        if(l.tipo === "Crédito") document.getElementById("cadSocio").checked = l.socio || false;
         document.getElementById("tituloCadastro").innerText = "✏️ Editando"; 
         document.getElementById("btnSalvar").innerText = "Salvar Alterações"; 
         document.getElementById("btnSalvar").classList.add("btn-editando");
@@ -882,7 +957,9 @@
         document.getElementById("editId").value = ""; document.getElementById("cadDesc").value = ""; document.getElementById("cadValor").value = ""; document.getElementById("cadData").value = "";
         document.getElementById("cadPagamento").value = "À Vista"; toggleOpcoesPagamento(); document.getElementById("cadTipo").value = "Débito";
         document.getElementById("tituloCadastro").innerText = "💸 Registro"; document.getElementById("btnSalvar").innerText = "Registrar"; document.getElementById("btnSalvar").classList.remove("btn-editando"); 
+        toggleTipo();
         document.getElementById("cadSocio").checked = false;
+                
     }
 
     function atualizarTela() {
@@ -937,6 +1014,25 @@
                 itensVencidos.sort((a,b) => new Date(a.data) - new Date(b.data)).forEach(v => {
                     let corV = v.tipo === "Crédito" ? "#27ae60" : "#c0392b";
                     let sinal = v.tipo === "Crédito" ? "Recebimento Atrasado" : "Pagamento Atrasado";
+                    htmlVencidos += `<div class="item-vencido">
+                        <strong>${v.desc}</strong> <br>
+                        <span style="color:${corV}">Vencimento: ${formataData(v.data)} | Valor: ${formata(v.valor)} (${sinal})</span>
+                    </div>`;
+                });
+                document.getElementById('conteudoVencidos').innerHTML = htmlVencidos;
+                document.getElementById('modalVencidos').style.display = 'flex';
+            }
+            window.alertaVencidosMostrado = true;
+        }
+        // DISPARO DO POP-UP DE VENCIDOS (Apenas 1x por login)
+        if (!window.alertaVencidosMostrado && perfilUsuario !== 'Observador') {
+            let itensVencidos = lancamentos.filter(l => l.data < hoje && !l.status.toLowerCase().includes("efetuada") && !l.status.toLowerCase().includes("pago"));
+            
+            if (itensVencidos.length > 0) {
+                let htmlVencidos = "";
+                itensVencidos.sort((a,b) => new Date(a.data) - new Date(b.data)).forEach(v => {
+                    let corV = v.tipo === "Crédito" ? "#27ae60" : "#c0392b";
+                    let sinal = v.tipo === "Crédito" ? "Recebimento" : "Pagamento";
                     htmlVencidos += `<div class="item-vencido">
                         <strong>${v.desc}</strong> <br>
                         <span style="color:${corV}">Vencimento: ${formataData(v.data)} | Valor: ${formata(v.valor)} (${sinal})</span>
@@ -1038,19 +1134,72 @@
         }).catch(err => alert("Erro ao baixar logs: " + err.message));
     }
 
+    function fecharModalVencidos() { document.getElementById('modalVencidos').style.display = 'none'; }
+
+    function exportarPDFGenerico(idContainer, nomeArquivo) {
+        const elemento = document.getElementById(idContainer);
+        html2pdf().set({ margin: 10, filename: `${nomeArquivo}_${new Date().toISOString().split('T')[0]}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }).from(elemento).save().then(() => {
+            registrarLog("EXPORT_PDF", `Baixou PDF: ${nomeArquivo}`);
+        });
+    }
+
     function gerarRelatorios() {
         const ini = document.getElementById("rDataInicio").value, fim = document.getElementById("rDataFim").value;
         let totais = { ce: {}, de: {}, cv: {}, dv: {} };
+        
+        let aportesPorSocio = {};
+        let totalAportes = 0;
+
         lancamentos.filter(l => (!ini || l.data >= ini) && (!fim || l.data <= fim)).forEach(l => {
             let isEfetuada = l.status.toLowerCase().includes("efetuada") || l.status.toLowerCase().includes("pago");
             let cat = l.categoria;
+
+            // LÓGICA DO SÓCIO: Pega a CATEGORIA como nome do Sócio!
+            if (l.tipo === "Crédito" && isEfetuada && l.socio) {
+                let nomeSocio = l.categoria || "Não Identificado";
+                aportesPorSocio[nomeSocio] = (aportesPorSocio[nomeSocio] || 0) + l.valor;
+                totalAportes += l.valor;
+            }
+
             if(l.tipo === "Crédito" && isEfetuada) totais.ce[cat] = (totais.ce[cat] || 0) + l.valor;
             if(l.tipo === "Débito" && isEfetuada) totais.de[cat] = (totais.de[cat] || 0) + l.valor;
             if(l.tipo === "Crédito" && !isEfetuada) totais.cv[cat] = (totais.cv[cat] || 0) + l.valor;
             if(l.tipo === "Débito" && !isEfetuada) totais.dv[cat] = (totais.dv[cat] || 0) + l.valor;
         });
+
         const desenhar = (obj, idCont) => { let html = "", soma = 0; for(let c in obj) { html += `<div class="rel-linha"><span>${c}</span><span>${formata(obj[c])}</span></div>`; soma += obj[c]; } if(html === "") html = "<p style='color:#999; font-size:13px;'>Sem registros.</p>"; else html += `<div class="rel-linha"><span>TOTAL</span><span>${formata(soma)}</span></div>`; document.getElementById(idCont).innerHTML = html; };
         desenhar(totais.ce, "relCreditoEfetuado"); desenhar(totais.de, "relDebitoEfetuado"); desenhar(totais.cv, "relCreditoVencer"); desenhar(totais.dv, "relDebitoVencer");
+
+        // DESENHAR O QUADRO INTELIGENTE DE APORTES
+        let htmlAportes = "";
+        if (totalAportes > 0) {
+            let maiorAporte = Math.max(...Object.values(aportesPorSocio));
+            
+            for (let socio in aportesPorSocio) {
+                let valor = aportesPorSocio[socio];
+                let percentual = ((valor / totalAportes) * 100).toFixed(1);
+                let diferenca = maiorAporte - valor;
+                
+                let textoDiferenca = diferenca > 0 
+                    ? `<span style="color:#e74c3c; font-size: 13px;">⚠️ Falta ${formata(diferenca)} para igualar ao Investidor Majoritário</span>` 
+                    : `<span style="color:#27ae60; font-size: 13px;">🏆 Maior Aporte do Grupo</span>`;
+
+                htmlAportes += `
+                <div style="background: white; padding: 15px; border-radius: 6px; border: 1px solid #d1d8e0; margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: bold; margin-bottom: 8px;">
+                        <span>👤 Sócio: ${socio} <span style="background:#ecf0f1; color:#7f8c8d; padding:2px 8px; border-radius:12px; font-size:12px; margin-left:10px;">${percentual}% do Fundo</span></span>
+                        <span style="color: #8e44ad;">${formata(valor)}</span>
+                    </div>
+                    <div style="text-align: right; border-top: 1px dashed #eee; padding-top: 8px;">
+                        ${textoDiferenca}
+                    </div>
+                </div>`;
+            }
+            htmlAportes += `<div style="text-align: right; font-size: 18px; font-weight: bold; margin-top: 15px; padding-top: 15px; border-top: 3px solid #8e44ad;">Capital Total Aportado: <span style="color: #8e44ad;">${formata(totalAportes)}</span></div>`;
+        } else {
+            htmlAportes = "<p style='color:#999; font-size:14px; text-align:center;'>Nenhum aporte marcado como Sócio / Investidor neste período.</p>";
+        }
+        document.getElementById("relAportesSocios").innerHTML = htmlAportes;
     }
 
     function gerarVisaoMensal() {
