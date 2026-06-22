@@ -273,29 +273,29 @@
                 <div style="flex: 1; min-width: 150px;"><label>Até:</label><input type="date" id="rDataFim" onchange="gerarRelatorios()"></div>
             </div>
 
-            <div class="rel-box" id="boxExportAportes" style="margin-bottom: 20px; border-left: 5px solid #8e44ad; background: #faf9fc;">
+            <div class="rel-box" style="margin-bottom: 20px; border-left: 5px solid #8e44ad; background: #faf9fc;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px dashed #ccc; padding-bottom: 8px;">
                     <h3 style="color: #8e44ad; font-size: 18px; margin: 0;">🤝 Quadro de Aportes (Sócios / Investidores)</h3>
-                    <button class="btn-acao-topo" style="padding: 5px 12px; font-size: 12px; background: #34495e;" onclick="exportarPDFGenerico('boxExportAportes', 'Relatorio_Aportes')" data-html2canvas-ignore>📄 Baixar PDF do Quadro</button>
+                    <button class="btn-acao-topo" style="padding: 5px 12px; font-size: 12px; background: #34495e;" onclick="exportarPDFTabela('aportes', 'Quadro_de_Aportes')" data-html2canvas-ignore>📄 Baixar PDF do Quadro</button>
                 </div>
                 <div id="relAportesSocios"></div>
             </div>
 
             <div class="relatorios-grid">
-                <div class="rel-box" id="boxExportEntradasEfet">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px dashed #ccc; padding-bottom: 5px;"><h3 style="color: #27ae60; font-size: 15px; margin: 0;">✅ Entradas (Efetuadas)</h3><button class="btn-acao-topo" style="padding: 3px 8px; font-size: 11px;" onclick="exportarPDFGenerico('boxExportEntradasEfet', 'Entradas_Efetuadas')" data-html2canvas-ignore>📄 PDF</button></div>
+                <div class="rel-box">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px dashed #ccc; padding-bottom: 5px;"><h3 style="color: #27ae60; font-size: 15px; margin: 0;">✅ Entradas (Efetuadas)</h3><button class="btn-acao-topo" style="padding: 3px 8px; font-size: 11px;" onclick="exportarPDFTabela('ce', 'Entradas_Efetuadas')" data-html2canvas-ignore>📄 PDF</button></div>
                     <div id="relCreditoEfetuado"></div>
                 </div>
-                <div class="rel-box" id="boxExportSaidasEfet">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px dashed #ccc; padding-bottom: 5px;"><h3 style="color: #e74c3c; font-size: 15px; margin: 0;">✅ Saídas (Efetuadas)</h3><button class="btn-acao-topo" style="padding: 3px 8px; font-size: 11px;" onclick="exportarPDFGenerico('boxExportSaidasEfet', 'Saidas_Efetuadas')" data-html2canvas-ignore>📄 PDF</button></div>
+                <div class="rel-box">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px dashed #ccc; padding-bottom: 5px;"><h3 style="color: #e74c3c; font-size: 15px; margin: 0;">✅ Saídas (Efetuadas)</h3><button class="btn-acao-topo" style="padding: 3px 8px; font-size: 11px;" onclick="exportarPDFTabela('de', 'Saidas_Efetuadas')" data-html2canvas-ignore>📄 PDF</button></div>
                     <div id="relDebitoEfetuado"></div>
                 </div>
-                <div class="rel-box" id="boxExportEntradasVencer">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px dashed #ccc; padding-bottom: 5px;"><h3 style="color: #f39c12; font-size: 15px; margin: 0;">⏳ A Receber (Vencer)</h3><button class="btn-acao-topo" style="padding: 3px 8px; font-size: 11px;" onclick="exportarPDFGenerico('boxExportEntradasVencer', 'A_Receber_Vencer')" data-html2canvas-ignore>📄 PDF</button></div>
+                <div class="rel-box">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px dashed #ccc; padding-bottom: 5px;"><h3 style="color: #f39c12; font-size: 15px; margin: 0;">⏳ A Receber (Vencer)</h3><button class="btn-acao-topo" style="padding: 3px 8px; font-size: 11px;" onclick="exportarPDFTabela('cv', 'A_Receber_Vencer')" data-html2canvas-ignore>📄 PDF</button></div>
                     <div id="relCreditoVencer"></div>
                 </div>
-                <div class="rel-box" id="boxExportSaidasVencer">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px dashed #ccc; padding-bottom: 5px;"><h3 style="color: #c0392b; font-size: 15px; margin: 0;">⏳ A Pagar (Vencer)</h3><button class="btn-acao-topo" style="padding: 3px 8px; font-size: 11px;" onclick="exportarPDFGenerico('boxExportSaidasVencer', 'A_Pagar_Vencer')" data-html2canvas-ignore>📄 PDF</button></div>
+                <div class="rel-box">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px dashed #ccc; padding-bottom: 5px;"><h3 style="color: #c0392b; font-size: 15px; margin: 0;">⏳ A Pagar (Vencer)</h3><button class="btn-acao-topo" style="padding: 3px 8px; font-size: 11px;" onclick="exportarPDFTabela('dv', 'A_Pagar_Vencer')" data-html2canvas-ignore>📄 PDF</button></div>
                     <div id="relDebitoVencer"></div>
                 </div>
             </div>
@@ -1070,41 +1070,88 @@
         }).catch(err => alert("Erro ao baixar logs: " + err.message));
     }
 
-    function exportarPDFGenerico(idContainer, nomeArquivo) {
-        const elemento = document.getElementById(idContainer);
+    function exportarPDFTabela(tipo, tituloBase) {
+        const ini = document.getElementById("rDataInicio").value;
+        const fim = document.getElementById("rDataFim").value;
         
-        // 1. Guarda a aparência original da caixa
-        const estiloOriginal = elemento.getAttribute('style') || '';
-        
-        // 2. Esconde os botões de PDF temporariamente
-        const botoes = elemento.querySelectorAll('button');
-        botoes.forEach(btn => btn.style.display = 'none');
-        
-        // 3. Força a caixa original a ter o tamanho perfeito de uma folha na tela
-        elemento.style.width = '800px';
-        elemento.style.maxWidth = 'none';
-        elemento.style.minWidth = '800px';
-        elemento.style.background = '#ffffff';
-        elemento.style.padding = '20px';
+        let dadosFiltrados = lancamentos.filter(l => (!ini || l.data >= ini) && (!fim || l.data <= fim));
+        let somaTotal = 0;
+        let linhas = "";
 
-        const configuracao = {
+        // Monta o cabeçalho do documento invisível que vai virar PDF
+        let htmlDoc = `<div style="padding: 30px; font-family: Helvetica, Arial, sans-serif; color: #333;">
+            <h2 style="text-align:center; color: #2c3e50; border-bottom: 2px solid #bdc3c7; padding-bottom: 10px;">${tituloBase.replace(/_/g, ' ')}</h2>
+            <p style="text-align:center; font-size: 14px; color: #7f8c8d; margin-bottom: 30px;">
+                Período filtrado: ${ini ? formataData(ini) : 'Todo o Histórico'} até ${fim ? formataData(fim) : 'Hoje'}
+            </p>
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                <thead>
+                    <tr style="background-color: #f8f9fa; color: #2c3e50;">`;
+
+        // LÓGICA 1: Tabela de Aportes
+        if (tipo === 'aportes') {
+            htmlDoc += `<th style="padding: 12px; border: 1px solid #ccc; text-align: left;">Sócio / Investidor</th><th style="padding: 12px; border: 1px solid #ccc; text-align: right;">Aporte Total (R$)</th></tr></thead><tbody>`;
+            let aportesPorSocio = {};
+            dadosFiltrados.forEach(l => {
+                let isEfetuada = l.status.toLowerCase().includes("efetuada") || l.status.toLowerCase().includes("pago");
+                if (l.tipo === "Crédito" && isEfetuada && l.socio) {
+                    let nomeSocio = l.categoria || "Não Identificado";
+                    aportesPorSocio[nomeSocio] = (aportesPorSocio[nomeSocio] || 0) + l.valor;
+                    somaTotal += l.valor;
+                }
+            });
+            let maiorAporte = somaTotal > 0 ? Math.max(...Object.values(aportesPorSocio)) : 0;
+            
+            for(let socio in aportesPorSocio) {
+                let v = aportesPorSocio[socio];
+                let pct = ((v / somaTotal) * 100).toFixed(1);
+                let dif = maiorAporte - v;
+                let textoDif = dif > 0 ? `(Falta ${formata(dif)} para topo)` : `(Maior Aporte do Grupo)`;
+                linhas += `<tr><td style="padding: 12px; border: 1px solid #ccc;"><strong>${socio}</strong><br><span style="color:#7f8c8d; font-size: 12px;">${pct}% do Fundo - ${textoDif}</span></td><td style="padding: 12px; border: 1px solid #ccc; text-align: right; font-weight: bold; color: #8e44ad;">${formata(v)}</td></tr>`;
+            }
+        } 
+        // LÓGICA 2: Tabelas de Categorias Normais (Entradas, Saídas, etc)
+        else {
+            htmlDoc += `<th style="padding: 12px; border: 1px solid #ccc; text-align: left;">Categoria Financeira</th><th style="padding: 12px; border: 1px solid #ccc; text-align: right;">Valor Acumulado (R$)</th></tr></thead><tbody>`;
+            let totais = {};
+            dadosFiltrados.forEach(l => {
+                let isEfetuada = l.status.toLowerCase().includes("efetuada") || l.status.toLowerCase().includes("pago");
+                let cat = l.categoria;
+                let adicionar = false;
+                
+                if(tipo === 'ce' && l.tipo === "Crédito" && isEfetuada) adicionar = true;
+                if(tipo === 'de' && l.tipo === "Débito" && isEfetuada) adicionar = true;
+                if(tipo === 'cv' && l.tipo === "Crédito" && !isEfetuada) adicionar = true;
+                if(tipo === 'dv' && l.tipo === "Débito" && !isEfetuada) adicionar = true;
+                
+                if(adicionar) {
+                    totais[cat] = (totais[cat] || 0) + l.valor;
+                    somaTotal += l.valor;
+                }
+            });
+
+            for(let c in totais) {
+                linhas += `<tr><td style="padding: 12px; border: 1px solid #ccc;">${c}</td><td style="padding: 12px; border: 1px solid #ccc; text-align: right; font-weight: bold;">${formata(totais[c])}</td></tr>`;
+            }
+        }
+
+        if (linhas === "") linhas = `<tr><td colspan="2" style="padding: 20px; border: 1px solid #ccc; text-align: center; color: #999;">Nenhum registro encontrado neste período.</td></tr>`;
+
+        htmlDoc += linhas;
+        htmlDoc += `</tbody><tfoot><tr style="background-color: #eee; font-weight: bold;"><td style="padding: 12px; border: 1px solid #ccc; text-align: right;">TOTAL:</td><td style="padding: 12px; border: 1px solid #ccc; text-align: right;">${formata(somaTotal)}</td></tr></tfoot></table></div>`;
+
+        // Converte o HTML em um container virtual e gera o PDF limpo
+        const containerVirtual = document.createElement("div");
+        containerVirtual.innerHTML = htmlDoc;
+        
+        html2pdf().set({
             margin: 10,
-            filename: `${nomeArquivo}_${new Date().toISOString().split('T')[0]}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true },
+            filename: `${tituloBase}_${new Date().toISOString().split('T')[0]}.pdf`,
+            image: { type: 'jpeg', quality: 1.0 },
+            html2canvas: { scale: 2 },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-
-        // 4. Tira a foto e baixa
-        html2pdf().set(configuracao).from(elemento).save().then(() => {
-            // 5. Devolve a caixa para o estado normal imediatamente
-            elemento.setAttribute('style', estiloOriginal);
-            botoes.forEach(btn => btn.style.display = '');
-            registrarLog("EXPORT_PDF", `Baixou PDF isolado: ${nomeArquivo}`);
-        }).catch(err => {
-            // Se der erro, garante que a tela volte ao normal também
-            elemento.setAttribute('style', estiloOriginal);
-            botoes.forEach(btn => btn.style.display = '');
+        }).from(containerVirtual).save().then(() => {
+            registrarLog("EXPORT_PDF", `Baixou tabela formatada: ${tituloBase.replace(/_/g, ' ')}`);
         });
     }
 
