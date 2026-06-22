@@ -1071,27 +1071,22 @@
     }
 
     function exportarPDFGenerico(idContainer, nomeArquivo) {
-        const elementoOriginal = document.getElementById(idContainer);
+        const elemento = document.getElementById(idContainer);
         
-        // 1. Cria um "estúdio fotográfico" temporário e invisível
-        const cloneContainer = document.createElement('div');
-        cloneContainer.style.position = 'absolute';
-        cloneContainer.style.left = '-9999px'; // Joga para fora da tela
-        cloneContainer.style.top = '0';
-        cloneContainer.style.width = '800px'; // Força uma largura perfeita de computador
-        cloneContainer.style.background = '#ffffff'; // Fundo branco
-        cloneContainer.style.padding = '20px';
+        // 1. Guarda a aparência original da caixa
+        const estiloOriginal = elemento.getAttribute('style') || '';
         
-        // 2. Faz uma cópia exata do quadro que queremos baixar
-        const clone = elementoOriginal.cloneNode(true);
+        // 2. Esconde os botões de PDF temporariamente
+        const botoes = elemento.querySelectorAll('button');
+        botoes.forEach(btn => btn.style.display = 'none');
         
-        // 3. Esconde os botões de "Baixar PDF" dentro da cópia para não saírem na foto
-        clone.querySelectorAll('button').forEach(btn => btn.style.display = 'none');
-        
-        cloneContainer.appendChild(clone);
-        document.body.appendChild(cloneContainer);
+        // 3. Força a caixa original a ter o tamanho perfeito de uma folha na tela
+        elemento.style.width = '800px';
+        elemento.style.maxWidth = 'none';
+        elemento.style.minWidth = '800px';
+        elemento.style.background = '#ffffff';
+        elemento.style.padding = '20px';
 
-        // 4. Configura e gera o PDF a partir dessa cópia perfeita
         const configuracao = {
             margin: 10,
             filename: `${nomeArquivo}_${new Date().toISOString().split('T')[0]}.pdf`,
@@ -1100,10 +1095,16 @@
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
-        html2pdf().set(configuracao).from(cloneContainer).save().then(() => {
+        // 4. Tira a foto e baixa
+        html2pdf().set(configuracao).from(elemento).save().then(() => {
+            // 5. Devolve a caixa para o estado normal imediatamente
+            elemento.setAttribute('style', estiloOriginal);
+            botoes.forEach(btn => btn.style.display = '');
             registrarLog("EXPORT_PDF", `Baixou PDF isolado: ${nomeArquivo}`);
-            // 5. Limpa a sujeira (destrói o clone) após o download
-            document.body.removeChild(cloneContainer);
+        }).catch(err => {
+            // Se der erro, garante que a tela volte ao normal também
+            elemento.setAttribute('style', estiloOriginal);
+            botoes.forEach(btn => btn.style.display = '');
         });
     }
 
