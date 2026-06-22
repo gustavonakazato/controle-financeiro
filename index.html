@@ -1078,9 +1078,8 @@
         let somaTotal = 0;
         let linhas = "";
 
-        // 1. Criamos todo o conteúdo visual em formato de TEXTO (HTML String)
-        let htmlDoc = `
-        <div style="width: 100%; max-width: 800px; margin: 0 auto; padding: 20px; font-family: Helvetica, Arial, sans-serif; color: #333; background: #ffffff;">
+        // 1. Monta o corpo da Tabela HTML
+        let htmlDoc = `<div id="areaImpressao" style="width: 800px; padding: 30px; font-family: Arial, sans-serif; color: #333; background: #ffffff;">
             <h2 style="text-align:center; color: #2c3e50; border-bottom: 2px solid #bdc3c7; padding-bottom: 10px; margin-top: 0;">${tituloBase.replace(/_/g, ' ')}</h2>
             <p style="text-align:center; font-size: 14px; color: #7f8c8d; margin-bottom: 30px;">
                 Período filtrado: ${ini ? formataData(ini) : 'Todo o Histórico'} até ${fim ? formataData(fim) : 'Hoje'}
@@ -1139,18 +1138,45 @@
         htmlDoc += linhas;
         htmlDoc += `</tbody><tfoot><tr style="background-color: #eee; font-weight: bold;"><td style="padding: 12px; border: 1px solid #ccc; text-align: right;">TOTAL:</td><td style="padding: 12px; border: 1px solid #ccc; text-align: right; color: #2c3e50;">${formata(somaTotal)}</td></tr></tfoot></table></div>`;
 
-        // 2. O SEGREDO MÁXIMO: Passamos o texto puro (htmlDoc) para a biblioteca. Ela mesma constrói, fotografa e apaga sem a gente ver.
-        html2pdf().set({
-            margin: [15, 10, 15, 10], 
-            filename: `${tituloBase}_${new Date().toISOString().split('T')[0]}.pdf`,
-            image: { type: 'jpeg', quality: 1.0 },
-            html2canvas: { scale: 2 },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        }).from(htmlDoc).save().then(() => {
-            registrarLog("EXPORT_PDF", `Baixou tabela formatada: ${tituloBase.replace(/_/g, ' ')}`);
-        });
-    }
+        // =========================================================
+        // A MÁGICA DE VERDADE COMEÇA AQUI
+        // =========================================================
 
+        // 2. Cria a Cortina Preta de Carregamento (Cobre a visão do usuário)
+        const telaCarregamento = document.createElement("div");
+        telaCarregamento.style.cssText = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100000; font-family: Arial;";
+        telaCarregamento.innerHTML = `<div style="font-size: 50px; margin-bottom: 15px;">📄</div><h2 style="margin:0;">Gerando Documento PDF...</h2><p style="color:#ccc;">Por favor, aguarde um instante.</p>`;
+        document.body.appendChild(telaCarregamento);
+
+        // 3. Cola a Tabela de 800px REAIS na tela (escondida ATRÁS da cortina)
+        const containerTabela = document.createElement("div");
+        containerTabela.style.cssText = "position: absolute; top: 0; left: 0; width: 800px; background: white; z-index: 99999;";
+        containerTabela.innerHTML = htmlDoc;
+        document.body.appendChild(containerTabela);
+
+        // 4. Dá meio segundo (500ms) pro navegador "pintar" a tabela, bate a foto e destrói as provas
+        window.scrollTo(0, 0); // Sobe a tela rapidinho
+        
+        setTimeout(() => {
+            html2pdf().set({
+                margin: 10,
+                filename: `${tituloBase}_${new Date().toISOString().split('T')[0]}.pdf`,
+                image: { type: 'jpeg', quality: 1.0 },
+                html2canvas: { scale: 2, useCORS: true, logging: false },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            }).from(containerTabela).save().then(() => {
+                registrarLog("EXPORT_PDF", `Baixou tabela formatada: ${tituloBase.replace(/_/g, ' ')}`);
+                // Limpa a tela!
+                document.body.removeChild(containerTabela);
+                document.body.removeChild(telaCarregamento);
+            }).catch(err => {
+                // Se algo der erro, limpa a tela pra não travar o sistema
+                document.body.removeChild(containerTabela);
+                document.body.removeChild(telaCarregamento);
+                alert("Erro ao gerar o PDF. Tente novamente.");
+            });
+        }, 500); 
+    }
     function gerarRelatorios() {
         const ini = document.getElementById("rDataInicio").value, fim = document.getElementById("rDataFim").value;
         let totais = { ce: {}, de: {}, cv: {}, dv: {} };
