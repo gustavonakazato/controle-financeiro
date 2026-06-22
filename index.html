@@ -1072,7 +1072,20 @@
 
     function exportarPDFGenerico(idContainer, nomeArquivo) {
         const elemento = document.getElementById(idContainer);
-        html2pdf().set({ margin: 10, filename: `${nomeArquivo}_${new Date().toISOString().split('T')[0]}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }).from(elemento).save().then(() => {
+        
+        const configuracaoPDF = {
+            margin: 10,
+            filename: `${nomeArquivo}_${new Date().toISOString().split('T')[0]}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { 
+                scale: 2, 
+                useCORS: true,
+                windowWidth: 1024 // A Mágica: Força a leitura simulando uma tela de computador
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(configuracaoPDF).from(elemento).save().then(() => {
             registrarLog("EXPORT_PDF", `Baixou PDF: ${nomeArquivo}`);
         });
     }
