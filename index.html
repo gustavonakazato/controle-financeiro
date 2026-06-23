@@ -434,7 +434,58 @@
         <button class="btn" style="background:#34495e; margin-top:0;" onclick="fecharModalVencidos()">Ciente, fechar aviso</button>
     </div>
 </div>    
+<div id="modalParcial" class="modal-overlay">
+    <div class="modal-box" style="max-width: 400px;">
+        <h3 style="color: #2980b9;">✂️ Pagamento Parcial</h3>
+        <input type="hidden" id="parcialId">
+        <p style="font-size: 13px; color: #555;">Informe quanto foi pago agora. O sistema criará um novo lançamento a vencer para a diferença.</p>
+        
+        <div class="form-group">
+            <label>Valor Pago Agora (R$):</label>
+            <input type="number" id="parcialValorPago" step="0.01">
+        </div>
+        <div class="form-group">
+            <label>Data de Vencimento do Restante:</label>
+            <input type="date" id="parcialDataRestante">
+        </div>
+        
+        <div style="display:flex; gap:10px; margin-top: 15px;">
+            <button class="btn" style="background:#27ae60; margin:0;" onclick="confirmarParcial()">Confirmar Parcial</button>
+            <button class="btn" style="background:#7f8c8d; margin:0;" onclick="document.getElementById('modalParcial').style.display='none'">Cancelar</button>
+        </div>
+    </div>
+</div>
 
+<div id="modalRenovacao" class="modal-overlay">
+    <div class="modal-box" style="max-width: 400px;">
+        <h3 style="color: #f39c12;">🔄 Renovar Lançamento</h3>
+        <p style="font-size: 14px; color: #333;">Você concluiu a última parcela de <strong id="renovaNome" style="color: #f39c12;"></strong>. Deseja iniciar um novo ciclo?</p>
+        
+        <input type="hidden" id="renovaCategoria"><input type="hidden" id="renovaConta">
+        <input type="hidden" id="renovaTipo"><input type="hidden" id="renovaSocio"><input type="hidden" id="renovaNomeSocio">
+        
+        <div class="form-group">
+            <label>Valor de CADA NOVA Parcela (R$):</label>
+            <input type="number" id="renovaValor" step="0.01">
+        </div>
+        <div class="form-row">
+            <div class="form-group" style="flex: 1;">
+                <label>Qtd. de Meses:</label>
+                <input type="number" id="renovaParcelas" value="12" min="2">
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label>Data do 1º Vencimento:</label>
+                <input type="date" id="renovaData">
+            </div>
+        </div>
+        
+        <div style="display:flex; gap:10px; margin-top: 15px;">
+            <button class="btn" style="background:#27ae60; margin:0;" onclick="confirmarRenovacao()">Renovar Agora</button>
+            <button class="btn" style="background:#7f8c8d; margin:0;" onclick="document.getElementById('modalRenovacao').style.display='none'">Não, Obrigado</button>
+        </div>
+    </div>
+</div>
+    
 <script>
     // --- FIREBASE CONFIG ---
     const firebaseConfig = {
@@ -942,7 +993,11 @@
             if (isAtrasado) tr.className = "vencido"; else if (isHoje) tr.className = "vence-hoje";
 
             let selectStatus = perfilUsuario === 'Observador' ? l.status : `<select onchange="alterarStatus('${l.id}', this.value)" style="width: 100%; min-width: 100px; padding: 6px 4px; font-size: 13px; border-radius: 4px;"><option value="${l.status}" selected>${l.status}</option>${statusLista.filter(s=>s!=l.status).map(s=>`<option value="${s}">${s}</option>`).join('')}</select>`;
-            let acoesHtml = perfilUsuario === 'Observador' ? '' : `<td style="text-align:center; white-space:nowrap;" data-html2canvas-ignore class="fin-req"><button class="btn-acao" onclick="editar('${l.id}')">✏️</button><button class="btn-acao" onclick="remover('${l.id}')">🗑️</button></td>`;
+            let acoesHtml = perfilUsuario === 'Observador' ? '' : `<td style="text-align:center; white-space:nowrap;" data-html2canvas-ignore class="fin-req">
+                <button class="btn-acao" title="Pagamento Parcial" onclick="abrirPagamentoParcial('${l.id}')">✂️</button>
+                <button class="btn-acao" title="Editar" onclick="editar('${l.id}')">✏️</button>
+                <button class="btn-acao" title="Excluir" onclick="remover('${l.id}')">🗑️</button>
+            </td>`;
             
             let tagSocioVisual = l.socio ? `<span style="background: #8e44ad; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-left: 8px;">🤝 Aporte (${l.categoria})</span>` : '';
 
@@ -986,6 +1041,19 @@
         if(perfilUsuario === 'Observador') return;
         db.collection("lancamentos").doc(id.toString()).update({ status: st });
         registrarLog("ALT_STATUS", `Mudou status do doc ${id} para ${st}`);
+
+        // INTEGRAÇÃO DA RENOVAÇÃO AUTOMÁTICA
+        if(st.toLowerCase().includes("efetuada") || st.toLowerCase().includes("pago")) {
+            let l = lancamentos.find(x => x.id === id);
+            if (l && l.desc) {
+                // Tenta achar um padrão "(X/X)" no final do texto. Ex: (12/12)
+                let match = l.desc.match(/\((\d+)\/(\d+)\)$/);
+                if (match && match[1] === match[2]) {
+                    // É a última parcela do ciclo! Pergunta se quer renovar.
+                    abrirRenovacao(l);
+                }
+            }
+        }
     }
     
     function remover(id) { 
@@ -1253,7 +1321,119 @@
         rTb(getStr(ano, mes), "tbMesAtual"); 
         rTb(getStr(mPos.getFullYear(), mPos.getMonth()), "tbMesPosterior");
     }
+// ==========================================
+    // LÓGICA DE PAGAMENTO PARCIAL
+    // ==========================================
+    function abrirPagamentoParcial(id) {
+        if(perfilUsuario === 'Observador') return;
+        let l = lancamentos.find(x => x.id === id);
+        if(!l) return;
+        
+        document.getElementById('parcialId').value = l.id;
+        document.getElementById('parcialValorPago').value = l.valor; 
+        document.getElementById('parcialDataRestante').value = ""; 
+        document.getElementById('modalParcial').style.display = 'flex';
+    }
 
+    function confirmarParcial() {
+        let id = document.getElementById('parcialId').value;
+        let valorPago = parseFloat(document.getElementById('parcialValorPago').value);
+        let dataRestante = document.getElementById('parcialDataRestante').value;
+        let l = lancamentos.find(x => x.id === id);
+
+        if (isNaN(valorPago) || valorPago <= 0 || valorPago >= l.valor) {
+            return alert("O valor pago deve ser maior que zero e estritamente MENOR que o valor total do lançamento.");
+        }
+        if (!dataRestante) return alert("Por favor, informe a data de vencimento do valor restante.");
+
+        let valorRestante = l.valor - valorPago;
+
+        // 1. Atualiza o atual para pago parcial
+        db.collection("lancamentos").doc(id).update({
+            valor: valorPago,
+            status: "Efetuada (Parcial)"
+        });
+
+        // 2. Cria o novo boleto/fatura com o restante
+        let novoId = Date.now().toString();
+        db.collection("lancamentos").doc(novoId).set({
+            id: novoId,
+            desc: l.desc + " (Saldo Restante)",
+            categoria: l.categoria,
+            conta: l.conta || "Geral",
+            valor: valorRestante,
+            data: dataRestante,
+            tipo: l.tipo,
+            status: "A Vencer",
+            socio: l.socio || false,
+            nomeSocio: l.nomeSocio || ""
+        });
+
+        registrarLog("PARCIAL", `Deu baixa de ${formata(valorPago)} em [${l.desc}]. Gerou resto de ${formata(valorRestante)}`);
+        document.getElementById('modalParcial').style.display = 'none';
+        alert("Pagamento parcial computado e novo saldo a vencer gerado com sucesso!");
+    }
+
+    // ==========================================
+    // LÓGICA DE RENOVAÇÃO DE RECORRÊNCIA
+    // ==========================================
+    function abrirRenovacao(l) {
+        // Remove a parte do "(12/12)" do nome base para recomeçar limpo
+        let nomeBase = l.desc.replace(/\s*\(\d+\/\d+\)$/, ""); 
+        
+        document.getElementById('renovaNome').innerText = nomeBase;
+        document.getElementById('renovaCategoria').value = l.categoria;
+        document.getElementById('renovaConta').value = l.conta || "Geral";
+        document.getElementById('renovaTipo').value = l.tipo;
+        document.getElementById('renovaSocio').value = l.socio || false;
+        document.getElementById('renovaNomeSocio').value = l.nomeSocio || "";
+
+        document.getElementById('renovaValor').value = l.valor; 
+        document.getElementById('renovaData').value = ""; 
+        document.getElementById('modalRenovacao').style.display = 'flex';
+    }
+
+    function confirmarRenovacao() {
+        let nomeBase = document.getElementById('renovaNome').innerText;
+        let v = parseFloat(document.getElementById('renovaValor').value);
+        let n = parseInt(document.getElementById('renovaParcelas').value);
+        let dt = document.getElementById('renovaData').value;
+
+        let c = document.getElementById('renovaCategoria').value;
+        let contaRef = document.getElementById('renovaConta').value;
+        let t = document.getElementById('renovaTipo').value;
+        let isSocio = document.getElementById('renovaSocio').value === "true";
+        let nSocio = document.getElementById('renovaNomeSocio').value;
+
+        if (isNaN(v) || isNaN(n) || !dt) return alert("Preencha o valor, a quantidade de parcelas e a data inicial.");
+
+        let batch = db.batch();
+        for (let i = 0; i < n; i++) {
+            let dataVenc = new Date(dt + "T00:00:00");
+            dataVenc.setMonth(dataVenc.getMonth() + i);
+            
+            let novoId = (Date.now() + i).toString();
+            batch.set(db.collection("lancamentos").doc(novoId), {
+                id: novoId,
+                desc: `${nomeBase} (${i+1}/${n})`,
+                categoria: c,
+                conta: contaRef,
+                valor: v, 
+                data: dataVenc.toISOString().split('T')[0],
+                tipo: t,
+                status: "A Vencer",
+                socio: isSocio,
+                nomeSocio: nSocio
+            });
+        }
+        
+        batch.commit().then(() => {
+            registrarLog("RENOVOU", `Renovou ${nomeBase} em ${n}x de ${formata(v)}`);
+            document.getElementById('modalRenovacao').style.display = 'none';
+            alert("Sucesso! Nova cadeia de lançamentos recorrentes gerada.");
+        });
+    }
+    
 </script>
 
 </body>
