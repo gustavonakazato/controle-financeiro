@@ -766,8 +766,19 @@
 
     function carregarListas() {
         document.getElementById("cadCat").innerHTML = categorias.map(c => `<option value="${c}">${c}</option>`).join('');
-        let htmlCatFilter = `<label style="display:flex; align-items:center; gap:5px; padding:4px; cursor:pointer; font-size:13px; border-bottom:1px solid #eee; margin-bottom:4px; white-space: nowrap;"><input type="checkbox" id="chkCatAll" value="Todos" checked onchange="selecionarTodasCategorias(this)"> <strong>[ Selecionar Todas ]</strong></label><label style="display:flex; align-items:center; gap:5px; padding:4px; cursor:pointer; color:#8e44ad; font-weight:bold; font-size:13px; background:#faf9fc; border-radius:4px; white-space: nowrap;"><input type="checkbox" class="chk-cat-item" value="AportesSocio" onchange="atualizarFiltroCategoria()"> 🤝 Aportes de Sócios</label>`;
-        htmlCatFilter += categorias.map(c => `<label style="display:flex; align-items:center; gap:5px; padding:4px; cursor:pointer; font-size:13px; white-space: nowrap;"><input type="checkbox" class="chk-cat-item" value="${c}" onchange="atualizarFiltroCategoria()"> ${c}</label>`).join('');
+        let htmlCatFilter = `
+            <label style="display:flex; align-items:center; justify-content:flex-start; gap:8px; padding:4px; cursor:pointer; font-size:13px; border-bottom:1px solid #eee; margin-bottom:4px; white-space:nowrap;">
+                <input type="checkbox" id="chkCatAll" value="Todos" checked onchange="selecionarTodasCategorias(this)" style="width:auto; margin:0;"> <strong>[ Selecionar Todas ]</strong>
+            </label>
+            <label style="display:flex; align-items:center; justify-content:flex-start; gap:8px; padding:4px; cursor:pointer; color:#8e44ad; font-weight:bold; font-size:13px; background:#faf9fc; border-radius:4px; white-space:nowrap; margin-bottom:4px;">
+                <input type="checkbox" class="chk-cat-item" value="AportesSocio" onchange="atualizarFiltroCategoria()" style="width:auto; margin:0;"> 🤝 Aportes de Sócios
+            </label>
+        `;
+        htmlCatFilter += categorias.map(c => `
+            <label style="display:flex; align-items:center; justify-content:flex-start; gap:8px; padding:4px; cursor:pointer; font-size:13px; white-space:nowrap;">
+                <input type="checkbox" class="chk-cat-item" value="${c}" onchange="atualizarFiltroCategoria()" style="width:auto; margin:0;"> ${c}
+            </label>
+        `).join('');
         document.getElementById("dropdownCatOptions").innerHTML = htmlCatFilter;
         document.getElementById("cadStatus").innerHTML = statusLista.map(s => `<option value="${s}">${s}</option>`).join('');
         document.getElementById("fStatus").innerHTML = '<option value="Todos">Todos</option>' + statusLista.map(s => `<option value="${s}">${s}</option>`).join('');
