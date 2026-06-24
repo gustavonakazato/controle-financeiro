@@ -205,7 +205,7 @@
                     </select>
                 </div>
                 
-                <div id="containerSocio" class="form-group" style="display: none; background: #f8f9fa; padding: 10px; border-radius: 4px; border: 1px solid #e1e5eb;">
+                <div id="containerSocio" class="form-group" style="display: none; background: #f8f9fa; padding: 10px; border-radius: 4px; border: 1px solid #e1e5eb; box-sizing: border-box;">
                     <label style="display: flex; align-items: center; gap: 8px; margin: 0; cursor: pointer; color: #8e44ad; font-weight: bold;">
                         <input type="checkbox" id="cadSocio" style="width: auto;"> 🤝 Aporte de Sócio / Investidor
                     </label>
@@ -238,7 +238,14 @@
                         <div class="filtros-grid">
                             <div><label>Busca:</label><input type="text" id="fBusca" oninput="atualizarTela()"></div>
                             <div><label>Conta:</label><select id="fConta" onchange="atualizarTela()"></select></div>
-                            <div><label>Categoria:</label><select id="fCat" onchange="atualizarTela()"></select></div>
+                            <div>
+                                <label>Categoria:</label>
+                                <div style="position: relative;">
+                                    <button type="button" onclick="toggleDropdownCat()" id="btnFiltroCat" style="width:100%; padding:8px; text-align:left; border:1px solid #ccd1d9; border-radius:4px; background:white; font-size:14px; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; box-sizing:border-box; height:37px;">Todas</button>
+                                    <div id="dropdownCatOptions" style="display:none; position:absolute; top:100%; left:0; width:100%; max-height:220px; overflow-y:auto; background:white; border:1px solid #ccc; border-radius:4px; z-index:1000; padding:5px; box-sizing:border-box; box-shadow:0 4px 10px rgba(0,0,0,0.15);">
+                                        </div>
+                                </div>
+                            </div>
                             <div><label>Tipo:</label><select id="fTipo" onchange="atualizarTela()"><option value="Todos">Todos</option><option value="Débito">Débito</option><option value="Crédito">Crédito</option></select></div>
                             <div><label>Status:</label><select id="fStatus" onchange="atualizarTela()"></select></div>
                             <div><label>De:</label><input type="date" id="fDataInicio" onchange="atualizarTela()"></div>
@@ -852,7 +859,20 @@
 
     function carregarListas() {
         document.getElementById("cadCat").innerHTML = categorias.map(c => `<option value="${c}">${c}</option>`).join('');
-        document.getElementById("fCat").innerHTML = '<option value="Todos">Todas</option>' + categorias.map(c => `<option value="${c}">${c}</option>`).join('');
+        let htmlCatFilter = `
+            <label style="display:flex; align-items:center; gap:5px; padding:4px; cursor:pointer; font-size:13px; border-bottom:1px solid #eee; margin-bottom:4px;">
+                <input type="checkbox" id="chkCatAll" value="Todos" checked onchange="selecionarTodasCategorias(this)"> <strong>[ Selecionar Todas ]</strong>
+            </label>
+            <label style="display:flex; align-items:center; gap:5px; padding:4px; cursor:pointer; color:#8e44ad; font-weight:bold; font-size:13px; background:#faf9fc; border-radius:4px;">
+                <input type="checkbox" class="chk-cat-item" value="AportesSocio" onchange="atualizarFiltroCategoria()"> 🤝 Aportes de Sócios
+            </label>
+        `;
+        htmlCatFilter += categorias.map(c => `
+            <label style="display:flex; align-items:center; gap:5px; padding:4px; cursor:pointer; font-size:13px;">
+                <input type="checkbox" class="chk-cat-item" value="${c}" onchange="atualizarFiltroCategoria()"> ${c}
+            </label>
+        `).join('');
+        document.getElementById("dropdownCatOptions").innerHTML = htmlCatFilter;
         document.getElementById("cadStatus").innerHTML = statusLista.map(s => `<option value="${s}">${s}</option>`).join('');
         document.getElementById("fStatus").innerHTML = '<option value="Todos">Todos</option>' + statusLista.map(s => `<option value="${s}">${s}</option>`).join('');
         document.getElementById("cadConta").innerHTML = contasLista.map(c => `<option value="${c}">${c}</option>`).join('');
@@ -970,16 +990,30 @@
     function atualizarTela() {
         const tbody = document.getElementById("corpoTabela"); tbody.innerHTML = "";
         const fBusca = document.getElementById("fBusca").value.toLowerCase(), fTipo = document.getElementById("fTipo").value;
-        const fCat = document.getElementById("fCat").value, fStatus = document.getElementById("fStatus").value;
-        const fConta = document.getElementById("fConta").value, fIni = document.getElementById("fDataInicio").value, fFim = document.getElementById("fDataFim").value;
+        const fStatus = document.getElementById("fStatus").value, fConta = document.getElementById("fConta").value;
+        const fIni = document.getElementById("fDataInicio").value, fFim = document.getElementById("fDataFim").value;
         const fOrdem = document.getElementById("fOrdem").value;
+        
+        let masterCatAtivo = document.getElementById("chkCatAll").checked;
+        let listaCategoriasMarcadas = Array.from(document.querySelectorAll(".chk-cat-item")).filter(c => c.checked).map(c => c.value);
+        let filtrarApenasAportes = listaCategoriasMarcadas.includes("AportesSocio");
+        let categoriasReaisMarcadas = listaCategoriasMarcadas.filter(c => c !== "AportesSocio");
         
         let tEnt = 0, tSai = 0; const hoje = new Date().toISOString().split('T')[0];
 
         let dadosFiltradosGlobais = lancamentos.filter(l => {
             if(!l.data || !l.status) return false;
+            
+            let passaFiltroCategoria = false;
+            if (masterCatAtivo) {
+                passaFiltroCategoria = true;
+            } else {
+                if (filtrarApenasAportes && l.socio) passaFiltroCategoria = true;
+                if (categoriasReaisMarcadas.includes(l.categoria)) passaFiltroCategoria = true;
+            }
+
             return l.desc.toLowerCase().includes(fBusca) && (fTipo === "Todos" || l.tipo === fTipo) &&
-            (fCat === "Todos" || l.categoria === fCat) &&  (fConta === "Todas" || l.conta === fConta) &&
+            passaFiltroCategoria && (fConta === "Todas" || l.conta === fConta) &&
             (fStatus === "Todos" || l.status === fStatus) && (!fIni || l.data >= fIni) && (!fFim || l.data <= fFim);
         }).sort((a,b) => fOrdem === 'asc' ? new Date(a.data) - new Date(b.data) : new Date(b.data) - new Date(a.data));
 
@@ -1432,6 +1466,44 @@
             document.getElementById('modalRenovacao').style.display = 'none';
             alert("Sucesso! Nova cadeia de lançamentos recorrentes gerada.");
         });
+    }
+function toggleDropdownCat() {
+        let drop = document.getElementById("dropdownCatOptions");
+        drop.style.display = drop.style.display === "none" ? "block" : "none";
+    }
+
+    document.addEventListener("click", function(e) {
+        let drop = document.getElementById("dropdownCatOptions");
+        let btn = document.getElementById("btnFiltroCat");
+        if (drop && btn && !btn.contains(e.target) && !drop.contains(e.target)) drop.style.display = "none";
+    });
+
+    function selecionarTodasCategorias(master) {
+        let chks = document.querySelectorAll(".chk-cat-item");
+        chks.forEach(c => c.checked = false); 
+        if(!master.checked) master.checked = true;
+        atualizarTela();
+        atualizarTextoBotaoCat();
+    }
+
+    function atualizarFiltroCategoria() {
+        let chks = Array.from(document.querySelectorAll(".chk-cat-item")).filter(c => c.checked);
+        let master = document.getElementById("chkCatAll");
+        master.checked = chks.length === 0;
+        atualizarTela();
+        atualizarTextoBotaoCat();
+    }
+
+    function atualizarTextoBotaoCat() {
+        let master = document.getElementById("chkCatAll");
+        if (master.checked) return document.getElementById("btnFiltroCat").innerText = "Todas";
+        
+        let selecionadas = Array.from(document.querySelectorAll(".chk-cat-item"))
+            .filter(c => c.checked).map(c => c.value === "AportesSocio" ? "Aportes" : c.value);
+        
+        if (selecionadas.length === 0) document.getElementById("btnFiltroCat").innerText = "Nenhuma";
+        else if (selecionadas.length <= 2) document.getElementById("btnFiltroCat").innerText = selecionadas.join(", ");
+        else document.getElementById("btnFiltroCat").innerText = selecionadas.length + " Selecionadas";
     }
     
 </script>
