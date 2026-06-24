@@ -58,20 +58,8 @@
         .btn-limpar { background-color: #7f8c8d; }
         .btn-acao-topo { background: #34495e; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 5px; flex: 1; white-space: nowrap; }
         
-        /* Caixas de Resumo Congeladas no Topo (Definitivo) */
-        .resumo-container { 
-            display: flex; 
-            gap: 20px; 
-            flex-wrap: wrap;
-            width: 100%;
-            align-self: flex-start;
-            position: -webkit-sticky;
-            position: sticky; 
-            top: 0px; 
-            z-index: 100; 
-            background-color: #e9ecef; 
-            padding: 15px 0 10px 0; 
-        }
+        /* Caixas de Resumo Congeladas */
+        .resumo-container { display: flex; gap: 20px; flex-wrap: wrap; width: 100%; align-self: flex-start; position: -webkit-sticky; position: sticky; top: 0px; z-index: 100; background-color: #e9ecef; padding: 15px 0 10px 0; }
         .card { flex: 1; min-width: 200px; background: white; padding: 15px; border-radius: 8px; text-align: center; border-bottom: 4px solid #ddd; box-sizing: border-box; }
         .card h4 { margin: 0; font-size: 14px; color: #7f8c8d; }
         .card p { margin: 8px 0 0 0; font-size: 22px; font-weight: bold; }
@@ -90,7 +78,7 @@
         .btn-acao { border: none; background: none; cursor: pointer; font-size: 16px; padding: 4px; border-radius: 4px; }
         .btn-acao:hover { background: #eee; }
 
-        /* ESTILOS DO POP-UP DE VENCIDOS E TAG DE SÓCIO */
+        /* ESTILOS DE MODAIS E ALARMES */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 10000; }
         .modal-box { background: white; padding: 25px; border-radius: 8px; width: 90%; max-width: 500px; box-shadow: 0 5px 20px rgba(0,0,0,0.5); max-height: 80vh; display: flex; flex-direction: column; }
         .modal-box h3 { color: #e74c3c; margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
@@ -159,7 +147,6 @@
         <div id="loginMsg"></div>
         <input type="text" id="cpfAuth" placeholder="CPF (Apenas números)">
         <input type="password" id="senhaAuth" placeholder="Senha">
-        
         <button id="btnEntrar" onclick="entrar()">Entrar no Sistema</button>
         <button id="btnRegistrarPrimeiro" class="btn-secundario" style="display:none;" onclick="registrarPrimeiroAdmin()">⚠️ Criar Primeiro Administrador</button>
     </div>
@@ -243,7 +230,7 @@
                                 <div style="position: relative;">
                                     <button type="button" onclick="toggleDropdownCat()" id="btnFiltroCat" style="width:100%; padding:8px; text-align:left; border:1px solid #ccd1d9; border-radius:4px; background:white; font-size:14px; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; box-sizing:border-box; height:37px;">Todas</button>
                                     <div id="dropdownCatOptions" style="display:none; position:absolute; top:100%; left:0; width:100%; max-height:220px; overflow-y:auto; background:white; border:1px solid #ccc; border-radius:4px; z-index:1000; padding:5px; box-sizing:border-box; box-shadow:0 4px 10px rgba(0,0,0,0.15);">
-                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div><label>Tipo:</label><select id="fTipo" onchange="atualizarTela()"><option value="Todos">Todos</option><option value="Débito">Débito</option><option value="Crédito">Crédito</option></select></div>
@@ -520,7 +507,6 @@
     window.nomeUsuarioLogado = ""; 
     window.alertaVencidosMostrado = false;
 
-    // --- HELPER CPF ---
     function formatarCPFText(cpfStr) {
         if(!cpfStr) return "";
         let limpo = cpfStr.replace(/\D/g, '');
@@ -528,7 +514,6 @@
         return cpfStr;
     }
 
-    // --- CHECK DE PRIMEIRA EXECUÇÃO ---
     db.collection("usuarios").limit(1).get().then(snap => {
         if(snap.empty) {
             document.getElementById('btnRegistrarPrimeiro').style.display = 'block';
@@ -536,12 +521,10 @@
         }
     });
 
-    // --- SISTEMA DE AUTENTICAÇÃO ---
     auth.onAuthStateChanged(user => {
         if (user) {
             document.getElementById('telaLogin').style.display = 'none';
             document.getElementById('appLogado').style.display = 'block';
-            
             userAutenticado = user;
             carregarPerfilUsuario(user);
         } else {
@@ -563,7 +546,6 @@
     function registrarPrimeiroAdmin() {
         let cpf = document.getElementById('cpfAuth').value.replace(/\D/g, '');
         const s = document.getElementById('senhaAuth').value;
-        
         if(cpf.length !== 11) return document.getElementById('loginMsg').innerText = "Erro: CPF deve conter exatos 11 números.";
         if(s.length < 6) return document.getElementById('loginMsg').innerText = "A senha deve ter no mínimo 6 caracteres.";
         
@@ -580,15 +562,12 @@
         db.collection("usuarios").doc(user.uid).onSnapshot(doc => {
             if (doc.exists) {
                 let dadosUsuario = doc.data();
-                
                 if(dadosUsuario.status === 'Suspenso') {
                     alert("⚠️ SUA CONTA FOI SUSPENSA PELO ADMINISTRADOR.\nO acesso ao sistema foi revogado.");
-                    auth.signOut();
-                    return;
+                    auth.signOut(); return;
                 }
 
                 perfilUsuario = dadosUsuario.perfil;
-                
                 let cpfAtual = user.email.split('@')[0];
                 window.nomeUsuarioLogado = dadosUsuario.nome || formatarCPFText(cpfAtual);
                 
@@ -614,8 +593,7 @@
             document.querySelectorAll('.admin-req, .fin-req, .config-req').forEach(el => el.style.display = '');
             document.getElementById('painelCadastro').style.display = 'block';
             document.getElementById('areaRelatorioPDF').style.width = '78%';
-        } 
-        else if (perfilUsuario === 'Financeiro') {
+        } else if (perfilUsuario === 'Financeiro') {
             document.querySelectorAll('.fin-req, .config-req').forEach(el => el.style.display = '');
             document.getElementById('painelCadastro').style.display = 'block';
             document.getElementById('areaRelatorioPDF').style.width = '78%';
@@ -638,21 +616,15 @@
         if(!nome || cpf.length !== 11 || s.length < 6) return alert("Preencha o Nome, um CPF válido (11 dígitos) e uma senha com no mínimo 6 caracteres.");
 
         const emailFake = cpf + "@sistema.local";
-
         let appSecundario;
-        if (firebase.apps.length === 1) { appSecundario = firebase.initializeApp(firebaseConfig, "AppSecundario"); } 
-        else { appSecundario = firebase.app("AppSecundario"); }
+        if (firebase.apps.length === 1) { appSecundario = firebase.initializeApp(firebaseConfig, "AppSecundario"); } else { appSecundario = firebase.app("AppSecundario"); }
 
         appSecundario.auth().createUserWithEmailAndPassword(emailFake, s).then(cred => {
             db.collection("usuarios").doc(cred.user.uid).set({ nome: nome, cpf: cpf, perfil: p, status: "Ativo" });
             appSecundario.auth().signOut(); 
-            
             registrarLog("CRIOU_USUARIO", `Criou acesso para: ${nome} (${formatarCPFText(cpf)})`);
             alert(`Conta criada com sucesso!\n\nNome: ${nome}\nCPF: ${formatarCPFText(cpf)}\nPerfil: ${p}`);
-            
-            document.getElementById('novoUserNome').value = "";
-            document.getElementById('novoUserCpf').value = "";
-            document.getElementById('novoUserSenha').value = "";
+            document.getElementById('novoUserNome').value = ""; document.getElementById('novoUserCpf').value = ""; document.getElementById('novoUserSenha').value = "";
         }).catch(err => {
             if(err.code === 'auth/email-already-in-use') alert("Erro: Esse CPF já possui cadastro no sistema.");
             else alert("Erro ao criar usuário: " + err.message);
@@ -661,8 +633,7 @@
 
     function alterarPerfilUser(uid, campo, novoValor) {
         if(confirm(`Tem certeza que deseja alterar o ${campo} deste usuário?`)) {
-            let updateObj = {};
-            updateObj[campo] = novoValor;
+            let updateObj = {}; updateObj[campo] = novoValor;
             db.collection("usuarios").doc(uid).update(updateObj);
             registrarLog("ALT_USUARIO", `Alterou ${campo} do usuário para ${novoValor}`);
         }
@@ -671,13 +642,9 @@
     function registrarLog(acao, detalhes) {
         if(!userAutenticado) return;
         let identificadorUser = window.nomeUsuarioLogado || "Usuário Desconhecido";
-        
         db.collection("registros_atividades").add({ 
-            dataHora: new Date().toISOString(), 
-            usuario: identificadorUser, 
-            acao: String(acao), 
-            detalhes: String(detalhes) 
-        }).catch(e => console.error("Falha silenciosa no LOG:", e));
+            dataHora: new Date().toISOString(), usuario: identificadorUser, acao: String(acao), detalhes: String(detalhes) 
+        }).catch(e => console.error("Falha no LOG:", e));
     }
 
     function iniciarOuvintesDeDados() {
@@ -703,9 +670,7 @@
         db.collection("arquivos").orderBy("dataCriacao", "desc").onSnapshot(snap => {
             arquivosObra = [];
             snap.forEach(doc => {
-                let dados = doc.data();
-                dados.id = doc.id;
-                arquivosObra.push(dados);
+                let dados = doc.data(); dados.id = doc.id; arquivosObra.push(dados);
             });
             renderizarArquivos();
         });
@@ -714,37 +679,18 @@
             db.collection("usuarios").onSnapshot(snap => {
                 let h = "";
                 snap.forEach(doc => {
-                    let u = doc.data();
-                    let statusAtual = u.status || 'Ativo';
-                    let nomeUsuario = u.nome || "Não informado"; 
-                    
-                    h += `<tr>
-                    <td><strong>${nomeUsuario}</strong></td>
-                    <td>${formatarCPFText(u.cpf)}</td>
-                    <td>
-                        <select onchange="alterarPerfilUser('${doc.id}', 'perfil', this.value)" style="padding:4px; font-size:13px; width:100%;">
-                            <option value="Observador" ${u.perfil==='Observador'?'selected':''}>Observador</option>
-                            <option value="Financeiro" ${u.perfil==='Financeiro'?'selected':''}>Financeiro</option>
-                            <option value="Administrador" ${u.perfil==='Administrador'?'selected':''}>Administrador</option>
-                        </select>
-                    </td>
-                    <td>
-                        <select onchange="alterarPerfilUser('${doc.id}', 'status', this.value)" style="padding:4px; font-size:13px; width:100%; background: ${statusAtual==='Suspenso'?'#ffdddd':'#e8f8f5'}">
-                            <option value="Ativo" ${statusAtual==='Ativo'?'selected':''}>🟢 Ativo</option>
-                            <option value="Suspenso" ${statusAtual==='Suspenso'?'selected':''}>🔴 Suspenso</option>
-                        </select>
-                    </td></tr>`;
+                    let u = doc.data(); let statusAtual = u.status || 'Ativo'; let nomeUsuario = u.nome || "Não informado"; 
+                    h += `<tr><td><strong>${nomeUsuario}</strong></td><td>${formatarCPFText(u.cpf)}</td>
+                    <td><select onchange="alterarPerfilUser('${doc.id}', 'perfil', this.value)" style="padding:4px; font-size:13px; width:100%;"><option value="Observador" ${u.perfil==='Observador'?'selected':''}>Observador</option><option value="Financeiro" ${u.perfil==='Financeiro'?'selected':''}>Financeiro</option><option value="Administrador" ${u.perfil==='Administrador'?'selected':''}>Administrador</option></select></td>
+                    <td><select onchange="alterarPerfilUser('${doc.id}', 'status', this.value)" style="padding:4px; font-size:13px; width:100%; background: ${statusAtual==='Suspenso'?'#ffdddd':'#e8f8f5'}"><option value="Ativo" ${statusAtual==='Ativo'?'selected':''}>🟢 Ativo</option><option value="Suspenso" ${statusAtual==='Suspenso'?'selected':''}>🔴 Suspenso</option></select></td></tr>`;
                 });
                 document.getElementById('tabelaUsuariosAdmin').innerHTML = h;
             });
-
             document.getElementById('tabelaLogsAdmin').innerHTML = `<tr><td colspan="4" style="text-align:center;">Carregando registros...</td></tr>`;
-            
             db.collection("registros_atividades").orderBy("dataHora", "desc").onSnapshot(snap => {
                 let h = "";
                 snap.forEach(doc => {
-                    let l = doc.data();
-                    let dataFormat = new Date(l.dataHora).toLocaleString('pt-BR');
+                    let l = doc.data(); let dataFormat = new Date(l.dataHora).toLocaleString('pt-BR');
                     h += `<tr><td style="white-space:nowrap;">${dataFormat}</td><td style="white-space:nowrap;">${l.usuario}</td><td><span style="background:#e8f8f5; color:#16a085; padding:3px 6px; border-radius:4px; font-weight:bold; font-size:11px;">${l.acao}</span></td><td>${l.detalhes}</td></tr>`;
                 });
                 document.getElementById('tabelaLogsAdmin').innerHTML = h || '<tr><td colspan="4" style="text-align:center; padding:15px; color:#999;">Nenhuma atividade registrada ainda.</td></tr>';
@@ -756,24 +702,12 @@
 
     function adicionarArquivo() {
         if(perfilUsuario === 'Observador') return alert("Sem permissão");
-        let grupo = document.getElementById("arqGrupo").value;
-        let nome = document.getElementById("arqNome").value.trim();
-        let link = document.getElementById("arqLink").value.trim();
-        
+        let grupo = document.getElementById("arqGrupo").value; let nome = document.getElementById("arqNome").value.trim(); let link = document.getElementById("arqLink").value.trim();
         if(!nome || !link) return alert("Preencha o nome e cole o link do arquivo.");
         if(!link.startsWith("http")) return alert("O link está incorreto. Copie o link completo do Google Drive (começando com https://)");
-
         let identificadorUser = window.nomeUsuarioLogado || "Usuário Desconhecido";
-
-        db.collection("arquivos").add({
-            grupo: grupo || "Geral",
-            nome: nome,
-            link: link,
-            dataCriacao: new Date().toISOString(),
-            adicionadoPor: identificadorUser
-        }).then(() => {
-            document.getElementById("arqNome").value = "";
-            document.getElementById("arqLink").value = "";
+        db.collection("arquivos").add({ grupo: grupo || "Geral", nome: nome, link: link, dataCriacao: new Date().toISOString(), adicionadoPor: identificadorUser }).then(() => {
+            document.getElementById("arqNome").value = ""; document.getElementById("arqLink").value = "";
             registrarLog("ADC_ARQUIVO", `Adicionou arquivo [${grupo}] ${nome}`);
         });
     }
@@ -787,59 +721,29 @@
     }
 
     function renderizarArquivos() {
-        let h = "";
-        let filtroGrupo = document.getElementById("fGrupoArq").value;
-
+        let h = ""; let filtroGrupo = document.getElementById("fGrupoArq") ? document.getElementById("fGrupoArq").value : "Todos";
         let arquivosFiltrados = arquivosObra;
-        if(filtroGrupo && filtroGrupo !== "Todos") {
-            arquivosFiltrados = arquivosObra.filter(a => (a.grupo || "Geral") === filtroGrupo);
-        }
-
+        if(filtroGrupo && filtroGrupo !== "Todos") arquivosFiltrados = arquivosObra.filter(a => (a.grupo || "Geral") === filtroGrupo);
         arquivosFiltrados.forEach(a => {
             let dataFormatada = new Date(a.dataCriacao).toLocaleDateString('pt-BR');
             let btnApagar = perfilUsuario === 'Observador' ? '' : `<td style="text-align:center;" class="fin-req"><button class="btn-acao" onclick="removerArquivo('${a.id}')" title="Remover Link">🗑️</button></td>`;
             let nomeGrupo = a.grupo || "Geral";
-
-            h += `<tr>
-                <td><strong>${a.nome}</strong><br><small style="color:#7f8c8d;">📁 ${nomeGrupo}</small></td>
-                <td><a href="${a.link}" target="_blank" style="display:inline-block; background:#3498db; color:white; padding:6px 12px; border-radius:4px; text-decoration:none; font-weight:bold; font-size:12px;">🔗 Abrir no Drive</a></td>
-                <td style="font-size:11px; color:#7f8c8d;">${a.adicionadoPor}<br>${dataFormatada}</td>
-                ${btnApagar}
-            </tr>`;
+            h += `<tr><td><strong>${a.nome}</strong><br><small style="color:#7f8c8d;">📁 ${nomeGrupo}</small></td><td><a href="${a.link}" target="_blank" style="display:inline-block; background:#3498db; color:white; padding:6px 12px; border-radius:4px; text-decoration:none; font-weight:bold; font-size:12px;">🔗 Abrir no Drive</a></td><td style="font-size:11px; color:#7f8c8d;">${a.adicionadoPor}<br>${dataFormatada}</td>${btnApagar}</tr>`;
         });
-        
         document.getElementById("tbArquivos").innerHTML = h || '<tr><td colspan="4" style="text-align:center; padding: 20px; color:#999;">Nenhum arquivo encontrado neste grupo.</td></tr>';
-        
-        if(perfilUsuario === 'Observador') {
-            document.querySelectorAll('#abaArquivos .fin-req').forEach(el => el.style.display = 'none');
-        } else {
-            document.querySelectorAll('#abaArquivos .fin-req').forEach(el => el.style.display = '');
-        }
+        if(perfilUsuario === 'Observador') { document.querySelectorAll('#abaArquivos .fin-req').forEach(el => el.style.display = 'none'); } else { document.querySelectorAll('#abaArquivos .fin-req').forEach(el => el.style.display = ''); }
     }
 
     function salvarConfigNaNuvem() {
         if(perfilUsuario === 'Observador') return;
-        db.collection("config").doc("listas").set({ 
-            categorias: categorias, 
-            statusLista: statusLista, 
-            contasLista: contasLista,
-            gruposArquivos: gruposArquivos 
-        });
+        db.collection("config").doc("listas").set({ categorias: categorias, statusLista: statusLista, contasLista: contasLista, gruposArquivos: gruposArquivos });
     }
 
     function mudarAba(abaId) {
         document.querySelectorAll('.aba-conteudo').forEach(el => el.style.display = 'none');
         document.querySelectorAll('.aba-btn').forEach(el => el.classList.remove('aba-ativa'));
-        
-        let painel = document.getElementById(
-            abaId === 'dashboard' ? 'abaDashboard' : 
-            (abaId === 'relatorios' ? 'abaRelatorios' : 
-            (abaId === 'mensal' ? 'abaMensal' : 
-            (abaId === 'arquivos' ? 'abaArquivos' : 'abaConfig')))
-        );
-        
+        let painel = document.getElementById(abaId === 'dashboard' ? 'abaDashboard' : (abaId === 'relatorios' ? 'abaRelatorios' : (abaId === 'mensal' ? 'abaMensal' : (abaId === 'arquivos' ? 'abaArquivos' : 'abaConfig'))));
         painel.style.display = (abaId === 'dashboard' && window.innerWidth > 900) ? 'flex' : 'block';
-        
         document.getElementById('btnAba' + abaId.charAt(0).toUpperCase() + abaId.slice(1)).classList.add('aba-ativa');
         if(abaId === 'relatorios') gerarRelatorios();
         if(abaId === 'mensal') { mudarSubAbaMes('Atual'); gerarVisaoMensal(); }
@@ -853,34 +757,21 @@
         document.getElementById("btnSub"+s).classList.add('sub-aba-ativa'); 
     }
     
-    function formata(v) { return v.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}); }
+    function formata(v) { return Number(v || 0).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}); }
     function formataData(d) { if(!d) return ""; return d.split('-').reverse().join('/'); }
     function fecharModalVencidos() { document.getElementById('modalVencidos').style.display = 'none'; }
 
     function carregarListas() {
         document.getElementById("cadCat").innerHTML = categorias.map(c => `<option value="${c}">${c}</option>`).join('');
-        let htmlCatFilter = `
-            <label style="display:flex; align-items:center; gap:5px; padding:4px; cursor:pointer; font-size:13px; border-bottom:1px solid #eee; margin-bottom:4px;">
-                <input type="checkbox" id="chkCatAll" value="Todos" checked onchange="selecionarTodasCategorias(this)"> <strong>[ Selecionar Todas ]</strong>
-            </label>
-            <label style="display:flex; align-items:center; gap:5px; padding:4px; cursor:pointer; color:#8e44ad; font-weight:bold; font-size:13px; background:#faf9fc; border-radius:4px;">
-                <input type="checkbox" class="chk-cat-item" value="AportesSocio" onchange="atualizarFiltroCategoria()"> 🤝 Aportes de Sócios
-            </label>
-        `;
-        htmlCatFilter += categorias.map(c => `
-            <label style="display:flex; align-items:center; gap:5px; padding:4px; cursor:pointer; font-size:13px;">
-                <input type="checkbox" class="chk-cat-item" value="${c}" onchange="atualizarFiltroCategoria()"> ${c}
-            </label>
-        `).join('');
+        let htmlCatFilter = `<label style="display:flex; align-items:center; gap:5px; padding:4px; cursor:pointer; font-size:13px; border-bottom:1px solid #eee; margin-bottom:4px;"><input type="checkbox" id="chkCatAll" value="Todos" checked onchange="selecionarTodasCategorias(this)"> <strong>[ Selecionar Todas ]</strong></label><label style="display:flex; align-items:center; gap:5px; padding:4px; cursor:pointer; color:#8e44ad; font-weight:bold; font-size:13px; background:#faf9fc; border-radius:4px;"><input type="checkbox" class="chk-cat-item" value="AportesSocio" onchange="atualizarFiltroCategoria()"> 🤝 Aportes de Sócios</label>`;
+        htmlCatFilter += categorias.map(c => `<label style="display:flex; align-items:center; gap:5px; padding:4px; cursor:pointer; font-size:13px;"><input type="checkbox" class="chk-cat-item" value="${c}" onchange="atualizarFiltroCategoria()"> ${c}</label>`).join('');
         document.getElementById("dropdownCatOptions").innerHTML = htmlCatFilter;
         document.getElementById("cadStatus").innerHTML = statusLista.map(s => `<option value="${s}">${s}</option>`).join('');
         document.getElementById("fStatus").innerHTML = '<option value="Todos">Todos</option>' + statusLista.map(s => `<option value="${s}">${s}</option>`).join('');
         document.getElementById("cadConta").innerHTML = contasLista.map(c => `<option value="${c}">${c}</option>`).join('');
         document.getElementById("fConta").innerHTML = '<option value="Todas">Todas</option>' + contasLista.map(c => `<option value="${c}">${c}</option>`).join('');
-        
         document.getElementById("arqGrupo").innerHTML = gruposArquivos.map(g => `<option value="${g}">${g}</option>`).join('');
         document.getElementById("fGrupoArq").innerHTML = '<option value="Todos">Todos os Grupos/Obras</option>' + gruposArquivos.map(g => `<option value="${g}">${g}</option>`).join('');
-        
         document.getElementById("listaGruposArqConfig").innerHTML = gruposArquivos.map((g, i) => `<li>${g} <button onclick="remConfig('grupoArq', ${i})">Excluir</button></li>`).join('');
         document.getElementById("listaCatConfig").innerHTML = categorias.map((c, i) => `<li>${c} <button onclick="remConfig('cat', ${i})">Excluir</button></li>`).join('');
         document.getElementById("listaStatusConfig").innerHTML = statusLista.map((s, i) => `<li>${s} <button onclick="remConfig('status', ${i})">Excluir</button></li>`).join('');
@@ -933,7 +824,6 @@
         const pag = document.getElementById("cadPagamento").value;
 
         const isSocio = (t === "Crédito") ? document.getElementById("cadSocio").checked : false;
-
         if (!d || isNaN(v) || !dt) return alert("Preencha todos os campos obrigatórios!");
 
         if (id) {
@@ -974,7 +864,6 @@
         document.getElementById("tituloCadastro").innerText = "✏️ Editando"; 
         document.getElementById("btnSalvar").innerText = "Salvar Alterações"; 
         document.getElementById("btnSalvar").classList.add("btn-editando");
-       
     }
 
     function limparFormulario() {
@@ -983,7 +872,6 @@
         
         toggleTipo();
         document.getElementById("cadSocio").checked = false;
-
         document.getElementById("tituloCadastro").innerText = "💸 Registro"; document.getElementById("btnSalvar").innerText = "Registrar"; document.getElementById("btnSalvar").classList.remove("btn-editando"); 
     }
 
@@ -1003,7 +891,8 @@
         let tEnt = 0, tSai = 0; const hoje = new Date().toISOString().split('T')[0];
 
         let dadosFiltradosGlobais = lancamentos.filter(l => {
-            if(!l.data || !l.status) return false;
+            // BLINDAGEM DE DADOS CORROMPIDOS: Se o item antigo não tiver data, status ou desc, ignora para não travar!
+            if(!l.data || !l.status || !l.desc) return false;
             
             let passaFiltroCategoria = false;
             if (masterCatAtivo) {
@@ -1051,19 +940,16 @@
         
         if(perfilUsuario === 'Observador') document.querySelectorAll('.fin-req').forEach(el => el.style.display = 'none');
         
-        // DISPARO DO POP-UP DE VENCIDOS (Apenas 1x por login)
         if (!window.alertaVencidosMostrado && perfilUsuario !== 'Observador') {
-            let itensVencidos = lancamentos.filter(l => l.data < hoje && !l.status.toLowerCase().includes("efetuada") && !l.status.toLowerCase().includes("pago"));
+            // BLINDAGEM DE DADOS: O Vencidos também falhava se achasse um status corrompido!
+            let itensVencidos = lancamentos.filter(l => l.data && l.status && l.data < hoje && !l.status.toLowerCase().includes("efetuada") && !l.status.toLowerCase().includes("pago"));
             
             if (itensVencidos.length > 0) {
                 let htmlVencidos = "";
                 itensVencidos.sort((a,b) => new Date(a.data) - new Date(b.data)).forEach(v => {
                     let corV = v.tipo === "Crédito" ? "#27ae60" : "#c0392b";
                     let sinal = v.tipo === "Crédito" ? "Recebimento Atrasado" : "Pagamento Atrasado";
-                    htmlVencidos += `<div class="item-vencido">
-                        <strong>${v.desc}</strong> <br>
-                        <span style="color:${corV}">Vencimento: ${formataData(v.data)} | Valor: ${formata(v.valor)} (${sinal})</span>
-                    </div>`;
+                    htmlVencidos += `<div class="item-vencido"><strong>${v.desc}</strong> <br><span style="color:${corV}">Vencimento: ${formataData(v.data)} | Valor: ${formata(v.valor)} (${sinal})</span></div>`;
                 });
                 document.getElementById('conteudoVencidos').innerHTML = htmlVencidos;
                 document.getElementById('modalVencidos').style.display = 'flex';
@@ -1077,16 +963,11 @@
         db.collection("lancamentos").doc(id.toString()).update({ status: st });
         registrarLog("ALT_STATUS", `Mudou status do doc ${id} para ${st}`);
 
-        // INTEGRAÇÃO DA RENOVAÇÃO AUTOMÁTICA
         if(st.toLowerCase().includes("efetuada") || st.toLowerCase().includes("pago")) {
             let l = lancamentos.find(x => x.id === id);
             if (l && l.desc) {
-                // Tenta achar um padrão "(X/X)" no final do texto. Ex: (12/12)
                 let match = l.desc.match(/\((\d+)\/(\d+)\)$/);
-                if (match && match[1] === match[2]) {
-                    // É a última parcela do ciclo! Pergunta se quer renovar.
-                    abrirRenovacao(l);
-                }
+                if (match && match[1] === match[2]) abrirRenovacao(l);
             }
         }
     }
@@ -1116,16 +997,12 @@
                 if (backup.dados && backup.categorias && backup.status && backup.contas) {
                     if(confirm("ATENÇÃO: Isso vai enviar todos os dados do arquivo para a nuvem. Continuar?")) {
                         db.collection("config").doc("listas").set({ 
-                            categorias: backup.categorias, 
-                            statusLista: backup.status, 
-                            contasLista: backup.contas,
-                            gruposArquivos: backup.gruposArquivos || ["Geral"] 
+                            categorias: backup.categorias, statusLista: backup.status, contasLista: backup.contas, gruposArquivos: backup.gruposArquivos || ["Geral"] 
                         });
                         let batch = db.batch();
                         backup.dados.forEach(l => { batch.set(db.collection("lancamentos").doc(l.id.toString()), l); });
                         batch.commit().then(() => {
-                            registrarLog("RESTAURACAO", "Restaurou banco de dados via .JSON");
-                            alert("Backup restaurado na nuvem com sucesso!");
+                            registrarLog("RESTAURACAO", "Restaurou banco de dados via .JSON"); alert("Backup restaurado na nuvem com sucesso!");
                         });
                     }
                 } else alert("Arquivo inválido.");
@@ -1136,7 +1013,7 @@
 
     function exportarCSV() {
         let csv = "Vencimento;Descrição;Conta;Categoria;Valor;Tipo;Status\n";
-        lancamentos.forEach(l => { csv += `${formataData(l.data)};${l.desc};${l.conta || 'Geral'};${l.categoria};${l.valor.toFixed(2).replace('.',',')};${l.tipo};${l.status}\n`; });
+        lancamentos.forEach(l => { csv += `${formataData(l.data)};${l.desc};${l.conta || 'Geral'};${l.categoria};${Number(l.valor || 0).toFixed(2).replace('.',',')};${l.tipo};${l.status}\n`; });
         let link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
         link.download = `relatorio_financeiro_${new Date().toISOString().split('T')[0]}.csv`; link.click();
         registrarLog("EXPORT_CSV", "Exportou planilha CSV.");
@@ -1155,20 +1032,14 @@
     
     function baixarLogsCSV() {
         if(perfilUsuario !== 'Administrador') return alert("Sem permissão para baixar auditoria.");
-        
         db.collection("registros_atividades").orderBy("dataHora", "desc").get().then(snap => {
             let csv = "\uFEFFData/Hora;Usuário (Nome);Ação;Detalhes\n";
             snap.forEach(doc => {
-                let l = doc.data();
-                let dataFormat = new Date(l.dataHora).toLocaleString('pt-BR');
+                let l = doc.data(); let dataFormat = new Date(l.dataHora).toLocaleString('pt-BR');
                 csv += `${dataFormat};${l.usuario};${l.acao};${l.detalhes}\n`;
             });
-            
-            let link = document.createElement("a"); 
-            link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-            link.download = `auditoria_logs_${new Date().toISOString().split('T')[0]}.csv`; 
-            link.click();
-            
+            let link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+            link.download = `auditoria_logs_${new Date().toISOString().split('T')[0]}.csv`; link.click();
             registrarLog("EXPORT_LOGS", "Baixou o histórico completo de auditoria do sistema em CSV.");
         }).catch(err => alert("Erro ao baixar logs: " + err.message));
     }
@@ -1181,8 +1052,8 @@
         let somaTotal = 0;
         let linhas = "";
 
-        // 1. Monta o corpo da Tabela HTML
-        let htmlDoc = `<div id="areaImpressao" style="width: 800px; padding: 30px; font-family: Arial, sans-serif; color: #333; background: #ffffff;">
+        let htmlDoc = `
+        <div style="width: 100%; max-width: 800px; margin: 0 auto; padding: 20px; font-family: Helvetica, Arial, sans-serif; color: #333; background: #ffffff;">
             <h2 style="text-align:center; color: #2c3e50; border-bottom: 2px solid #bdc3c7; padding-bottom: 10px; margin-top: 0;">${tituloBase.replace(/_/g, ' ')}</h2>
             <p style="text-align:center; font-size: 14px; color: #7f8c8d; margin-bottom: 30px;">
                 Período filtrado: ${ini ? formataData(ini) : 'Todo o Histórico'} até ${fim ? formataData(fim) : 'Hoje'}
@@ -1195,112 +1066,63 @@
             htmlDoc += `<th style="padding: 12px; border: 1px solid #ccc; text-align: left; width: 60%;">Sócio / Investidor</th><th style="padding: 12px; border: 1px solid #ccc; text-align: right; width: 40%;">Aporte Total (R$)</th></tr></thead><tbody>`;
             let aportesPorSocio = {};
             dadosFiltrados.forEach(l => {
-                let isEfetuada = l.status.toLowerCase().includes("efetuada") || l.status.toLowerCase().includes("pago");
+                let isEfetuada = (l.status || "").toLowerCase().includes("efetuada") || (l.status || "").toLowerCase().includes("pago");
                 if (l.tipo === "Crédito" && isEfetuada && l.socio) {
                     let nomeSocio = l.categoria || "Não Identificado";
-                    aportesPorSocio[nomeSocio] = (aportesPorSocio[nomeSocio] || 0) + l.valor;
-                    somaTotal += l.valor;
+                    aportesPorSocio[nomeSocio] = (aportesPorSocio[nomeSocio] || 0) + Number(l.valor || 0);
+                    somaTotal += Number(l.valor || 0);
                 }
             });
             let maiorAporte = somaTotal > 0 ? Math.max(...Object.values(aportesPorSocio)) : 0;
             
             for(let socio in aportesPorSocio) {
-                let v = aportesPorSocio[socio];
-                let pct = ((v / somaTotal) * 100).toFixed(1);
-                let dif = maiorAporte - v;
+                let v = aportesPorSocio[socio]; let pct = ((v / somaTotal) * 100).toFixed(1); let dif = maiorAporte - v;
                 let textoDif = dif > 0 ? `(Falta ${formata(dif)} para topo)` : `(Maior Aporte do Grupo)`;
                 linhas += `<tr><td style="padding: 12px; border: 1px solid #ccc;"><strong>${socio}</strong><br><span style="color:#7f8c8d; font-size: 12px;">${pct}% do Fundo - ${textoDif}</span></td><td style="padding: 12px; border: 1px solid #ccc; text-align: right; font-weight: bold; color: #8e44ad;">${formata(v)}</td></tr>`;
             }
-        } 
-        else {
+        } else {
             htmlDoc += `<th style="padding: 12px; border: 1px solid #ccc; text-align: left; width: 60%;">Categoria Financeira</th><th style="padding: 12px; border: 1px solid #ccc; text-align: right; width: 40%;">Valor Acumulado (R$)</th></tr></thead><tbody>`;
             let totais = {};
             dadosFiltrados.forEach(l => {
-                let isEfetuada = l.status.toLowerCase().includes("efetuada") || l.status.toLowerCase().includes("pago");
-                let cat = l.categoria;
-                let adicionar = false;
-                
+                let isEfetuada = (l.status || "").toLowerCase().includes("efetuada") || (l.status || "").toLowerCase().includes("pago");
+                let cat = l.categoria; let adicionar = false;
                 if(tipo === 'ce' && l.tipo === "Crédito" && isEfetuada) adicionar = true;
                 if(tipo === 'de' && l.tipo === "Débito" && isEfetuada) adicionar = true;
                 if(tipo === 'cv' && l.tipo === "Crédito" && !isEfetuada) adicionar = true;
                 if(tipo === 'dv' && l.tipo === "Débito" && !isEfetuada) adicionar = true;
-                
-                if(adicionar) {
-                    totais[cat] = (totais[cat] || 0) + l.valor;
-                    somaTotal += l.valor;
-                }
+                if(adicionar) { totais[cat] = (totais[cat] || 0) + Number(l.valor || 0); somaTotal += Number(l.valor || 0); }
             });
-
-            for(let c in totais) {
-                linhas += `<tr><td style="padding: 12px; border: 1px solid #ccc;">${c}</td><td style="padding: 12px; border: 1px solid #ccc; text-align: right; font-weight: bold;">${formata(totais[c])}</td></tr>`;
-            }
+            for(let c in totais) { linhas += `<tr><td style="padding: 12px; border: 1px solid #ccc;">${c}</td><td style="padding: 12px; border: 1px solid #ccc; text-align: right; font-weight: bold;">${formata(totais[c])}</td></tr>`; }
         }
 
         if (linhas === "") linhas = `<tr><td colspan="2" style="padding: 20px; border: 1px solid #ccc; text-align: center; color: #999;">Nenhum registro encontrado neste período.</td></tr>`;
+        htmlDoc += linhas + `</tbody><tfoot><tr style="background-color: #eee; font-weight: bold;"><td style="padding: 12px; border: 1px solid #ccc; text-align: right;">TOTAL:</td><td style="padding: 12px; border: 1px solid #ccc; text-align: right; color: #2c3e50;">${formata(somaTotal)}</td></tr></tfoot></table></div>`;
 
-        htmlDoc += linhas;
-        htmlDoc += `</tbody><tfoot><tr style="background-color: #eee; font-weight: bold;"><td style="padding: 12px; border: 1px solid #ccc; text-align: right;">TOTAL:</td><td style="padding: 12px; border: 1px solid #ccc; text-align: right; color: #2c3e50;">${formata(somaTotal)}</td></tr></tfoot></table></div>`;
-
-        // =========================================================
-        // A MÁGICA DE VERDADE COMEÇA AQUI
-        // =========================================================
-
-        // 2. Cria a Cortina Preta de Carregamento (Cobre a visão do usuário)
-        const telaCarregamento = document.createElement("div");
-        telaCarregamento.style.cssText = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100000; font-family: Arial;";
-        telaCarregamento.innerHTML = `<div style="font-size: 50px; margin-bottom: 15px;">📄</div><h2 style="margin:0;">Gerando Documento PDF...</h2><p style="color:#ccc;">Por favor, aguarde um instante.</p>`;
-        document.body.appendChild(telaCarregamento);
-
-        // 3. Cola a Tabela de 800px REAIS na tela (escondida ATRÁS da cortina)
-        const containerTabela = document.createElement("div");
-        containerTabela.style.cssText = "position: absolute; top: 0; left: 0; width: 800px; background: white; z-index: 99999;";
-        containerTabela.innerHTML = htmlDoc;
-        document.body.appendChild(containerTabela);
-
-        // 4. Dá meio segundo (500ms) pro navegador "pintar" a tabela, bate a foto e destrói as provas
-        window.scrollTo(0, 0); // Sobe a tela rapidinho
-        
-        setTimeout(() => {
-            html2pdf().set({
-                margin: 10,
-                filename: `${tituloBase}_${new Date().toISOString().split('T')[0]}.pdf`,
-                image: { type: 'jpeg', quality: 1.0 },
-                html2canvas: { scale: 2, useCORS: true, logging: false },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            }).from(containerTabela).save().then(() => {
-                registrarLog("EXPORT_PDF", `Baixou tabela formatada: ${tituloBase.replace(/_/g, ' ')}`);
-                // Limpa a tela!
-                document.body.removeChild(containerTabela);
-                document.body.removeChild(telaCarregamento);
-            }).catch(err => {
-                // Se algo der erro, limpa a tela pra não travar o sistema
-                document.body.removeChild(containerTabela);
-                document.body.removeChild(telaCarregamento);
-                alert("Erro ao gerar o PDF. Tente novamente.");
-            });
-        }, 500); 
+        html2pdf().set({
+            margin: [15, 10, 15, 10], filename: `${tituloBase}_${new Date().toISOString().split('T')[0]}.pdf`,
+            image: { type: 'jpeg', quality: 1.0 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        }).from(htmlDoc).save().then(() => { registrarLog("EXPORT_PDF", `Baixou tabela formatada: ${tituloBase.replace(/_/g, ' ')}`); });
     }
+
     function gerarRelatorios() {
         const ini = document.getElementById("rDataInicio").value, fim = document.getElementById("rDataFim").value;
         let totais = { ce: {}, de: {}, cv: {}, dv: {} };
-        
-        let aportesPorSocio = {};
-        let totalAportes = 0;
+        let aportesPorSocio = {}; let totalAportes = 0;
 
         lancamentos.filter(l => (!ini || l.data >= ini) && (!fim || l.data <= fim)).forEach(l => {
-            let isEfetuada = l.status.toLowerCase().includes("efetuada") || l.status.toLowerCase().includes("pago");
+            let isEfetuada = (l.status || "").toLowerCase().includes("efetuada") || (l.status || "").toLowerCase().includes("pago");
             let cat = l.categoria;
 
             if (l.tipo === "Crédito" && isEfetuada && l.socio) {
                 let nomeSocio = l.categoria || "Não Identificado";
-                aportesPorSocio[nomeSocio] = (aportesPorSocio[nomeSocio] || 0) + l.valor;
-                totalAportes += l.valor;
+                aportesPorSocio[nomeSocio] = (aportesPorSocio[nomeSocio] || 0) + Number(l.valor || 0);
+                totalAportes += Number(l.valor || 0);
             }
 
-            if(l.tipo === "Crédito" && isEfetuada) totais.ce[cat] = (totais.ce[cat] || 0) + l.valor;
-            if(l.tipo === "Débito" && isEfetuada) totais.de[cat] = (totais.de[cat] || 0) + l.valor;
-            if(l.tipo === "Crédito" && !isEfetuada) totais.cv[cat] = (totais.cv[cat] || 0) + l.valor;
-            if(l.tipo === "Débito" && !isEfetuada) totais.dv[cat] = (totais.dv[cat] || 0) + l.valor;
+            if(l.tipo === "Crédito" && isEfetuada) totais.ce[cat] = (totais.ce[cat] || 0) + Number(l.valor || 0);
+            if(l.tipo === "Débito" && isEfetuada) totais.de[cat] = (totais.de[cat] || 0) + Number(l.valor || 0);
+            if(l.tipo === "Crédito" && !isEfetuada) totais.cv[cat] = (totais.cv[cat] || 0) + Number(l.valor || 0);
+            if(l.tipo === "Débito" && !isEfetuada) totais.dv[cat] = (totais.dv[cat] || 0) + Number(l.valor || 0);
         });
 
         const desenhar = (obj, idCont) => { let html = "", soma = 0; for(let c in obj) { html += `<div class="rel-linha"><span>${c}</span><span>${formata(obj[c])}</span></div>`; soma += obj[c]; } if(html === "") html = "<p style='color:#999; font-size:13px;'>Sem registros.</p>"; else html += `<div class="rel-linha"><span>TOTAL</span><span>${formata(soma)}</span></div>`; document.getElementById(idCont).innerHTML = html; };
@@ -1309,26 +1131,10 @@
         let htmlAportes = "";
         if (totalAportes > 0) {
             let maiorAporte = Math.max(...Object.values(aportesPorSocio));
-            
             for (let socio in aportesPorSocio) {
-                let valor = aportesPorSocio[socio];
-                let percentual = ((valor / totalAportes) * 100).toFixed(1);
-                let diferenca = maiorAporte - valor;
-                
-                let textoDiferenca = diferenca > 0 
-                    ? `<span style="color:#e74c3c; font-size: 13px;">⚠️ Falta ${formata(diferenca)} para igualar ao Investidor Majoritário</span>` 
-                    : `<span style="color:#27ae60; font-size: 13px;">🏆 Maior Aporte do Grupo</span>`;
-
-                htmlAportes += `
-                <div style="background: white; padding: 15px; border-radius: 6px; border: 1px solid #d1d8e0; margin-bottom: 10px;">
-                    <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: bold; margin-bottom: 8px;">
-                        <span>👤 Sócio: ${socio} <span style="background:#ecf0f1; color:#7f8c8d; padding:2px 8px; border-radius:12px; font-size:12px; margin-left:10px;">${percentual}% do Fundo</span></span>
-                        <span style="color: #8e44ad;">${formata(valor)}</span>
-                    </div>
-                    <div style="text-align: right; border-top: 1px dashed #eee; padding-top: 8px;">
-                        ${textoDiferenca}
-                    </div>
-                </div>`;
+                let valor = aportesPorSocio[socio]; let percentual = ((valor / totalAportes) * 100).toFixed(1); let diferenca = maiorAporte - valor;
+                let textoDiferenca = diferenca > 0 ? `<span style="color:#e74c3c; font-size: 13px;">⚠️ Falta ${formata(diferenca)} para igualar ao Investidor Majoritário</span>` : `<span style="color:#27ae60; font-size: 13px;">🏆 Maior Aporte do Grupo</span>`;
+                htmlAportes += `<div style="background: white; padding: 15px; border-radius: 6px; border: 1px solid #d1d8e0; margin-bottom: 10px;"><div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: bold; margin-bottom: 8px;"><span>👤 Sócio: ${socio} <span style="background:#ecf0f1; color:#7f8c8d; padding:2px 8px; border-radius:12px; font-size:12px; margin-left:10px;">${percentual}% do Fundo</span></span><span style="color: #8e44ad;">${formata(valor)}</span></div><div style="text-align: right; border-top: 1px dashed #eee; padding-top: 8px;">${textoDiferenca}</div></div>`;
             }
             htmlAportes += `<div style="text-align: right; font-size: 18px; font-weight: bold; margin-top: 15px; padding-top: 15px; border-top: 3px solid #8e44ad;">Capital Total Aportado: <span style="color: #8e44ad;">${formata(totalAportes)}</span></div>`;
         } else {
@@ -1356,14 +1162,10 @@
         rTb(getStr(ano, mes), "tbMesAtual"); 
         rTb(getStr(mPos.getFullYear(), mPos.getMonth()), "tbMesPosterior");
     }
-// ==========================================
-    // LÓGICA DE PAGAMENTO PARCIAL
-    // ==========================================
+
     function abrirPagamentoParcial(id) {
         if(perfilUsuario === 'Observador') return;
-        let l = lancamentos.find(x => x.id === id);
-        if(!l) return;
-        
+        let l = lancamentos.find(x => x.id === id); if(!l) return;
         document.getElementById('parcialId').value = l.id;
         document.getElementById('parcialValorPago').value = l.valor; 
         document.getElementById('parcialDataRestante').value = ""; 
@@ -1376,46 +1178,24 @@
         let dataRestante = document.getElementById('parcialDataRestante').value;
         let l = lancamentos.find(x => x.id === id);
 
-        if (isNaN(valorPago) || valorPago <= 0 || valorPago >= l.valor) {
-            return alert("O valor pago deve ser maior que zero e estritamente MENOR que o valor total do lançamento.");
-        }
+        if (isNaN(valorPago) || valorPago <= 0 || valorPago >= l.valor) return alert("O valor pago deve ser maior que zero e estritamente MENOR que o valor total do lançamento.");
         if (!dataRestante) return alert("Por favor, informe a data de vencimento do valor restante.");
 
         let valorRestante = l.valor - valorPago;
+        db.collection("lancamentos").doc(id).update({ valor: valorPago, status: "Efetuada (Parcial)" });
 
-        // 1. Atualiza o atual para pago parcial
-        db.collection("lancamentos").doc(id).update({
-            valor: valorPago,
-            status: "Efetuada (Parcial)"
-        });
-
-        // 2. Cria o novo boleto/fatura com o restante
         let novoId = Date.now().toString();
         db.collection("lancamentos").doc(novoId).set({
-            id: novoId,
-            desc: l.desc + " (Saldo Restante)",
-            categoria: l.categoria,
-            conta: l.conta || "Geral",
-            valor: valorRestante,
-            data: dataRestante,
-            tipo: l.tipo,
-            status: "A Vencer",
-            socio: l.socio || false,
-            nomeSocio: l.nomeSocio || ""
+            id: novoId, desc: l.desc + " (Saldo Restante)", categoria: l.categoria, conta: l.conta || "Geral",
+            valor: valorRestante, data: dataRestante, tipo: l.tipo, status: "A Vencer", socio: l.socio || false, nomeSocio: l.nomeSocio || ""
         });
-
         registrarLog("PARCIAL", `Deu baixa de ${formata(valorPago)} em [${l.desc}]. Gerou resto de ${formata(valorRestante)}`);
         document.getElementById('modalParcial').style.display = 'none';
         alert("Pagamento parcial computado e novo saldo a vencer gerado com sucesso!");
     }
 
-    // ==========================================
-    // LÓGICA DE RENOVAÇÃO DE RECORRÊNCIA
-    // ==========================================
     function abrirRenovacao(l) {
-        // Remove a parte do "(12/12)" do nome base para recomeçar limpo
         let nomeBase = l.desc.replace(/\s*\(\d+\/\d+\)$/, ""); 
-        
         document.getElementById('renovaNome').innerText = nomeBase;
         document.getElementById('renovaCategoria').value = l.categoria;
         document.getElementById('renovaConta').value = l.conta || "Geral";
@@ -1444,69 +1224,50 @@
 
         let batch = db.batch();
         for (let i = 0; i < n; i++) {
-            let dataVenc = new Date(dt + "T00:00:00");
-            dataVenc.setMonth(dataVenc.getMonth() + i);
-            
+            let dataVenc = new Date(dt + "T00:00:00"); dataVenc.setMonth(dataVenc.getMonth() + i);
             let novoId = (Date.now() + i).toString();
             batch.set(db.collection("lancamentos").doc(novoId), {
-                id: novoId,
-                desc: `${nomeBase} (${i+1}/${n})`,
-                categoria: c,
-                conta: contaRef,
-                valor: v, 
-                data: dataVenc.toISOString().split('T')[0],
-                tipo: t,
-                status: "A Vencer",
-                socio: isSocio,
-                nomeSocio: nSocio
+                id: novoId, desc: `${nomeBase} (${i+1}/${n})`, categoria: c, conta: contaRef, valor: v, 
+                data: dataVenc.toISOString().split('T')[0], tipo: t, status: "A Vencer", socio: isSocio, nomeSocio: nSocio
             });
         }
-        
         batch.commit().then(() => {
             registrarLog("RENOVOU", `Renovou ${nomeBase} em ${n}x de ${formata(v)}`);
             document.getElementById('modalRenovacao').style.display = 'none';
             alert("Sucesso! Nova cadeia de lançamentos recorrentes gerada.");
         });
     }
-function toggleDropdownCat() {
+
+    function toggleDropdownCat() {
         let drop = document.getElementById("dropdownCatOptions");
         drop.style.display = drop.style.display === "none" ? "block" : "none";
     }
 
     document.addEventListener("click", function(e) {
-        let drop = document.getElementById("dropdownCatOptions");
-        let btn = document.getElementById("btnFiltroCat");
+        let drop = document.getElementById("dropdownCatOptions"); let btn = document.getElementById("btnFiltroCat");
         if (drop && btn && !btn.contains(e.target) && !drop.contains(e.target)) drop.style.display = "none";
     });
 
     function selecionarTodasCategorias(master) {
-        let chks = document.querySelectorAll(".chk-cat-item");
-        chks.forEach(c => c.checked = false); 
+        let chks = document.querySelectorAll(".chk-cat-item"); chks.forEach(c => c.checked = false); 
         if(!master.checked) master.checked = true;
-        atualizarTela();
-        atualizarTextoBotaoCat();
+        atualizarTela(); atualizarTextoBotaoCat();
     }
 
     function atualizarFiltroCategoria() {
         let chks = Array.from(document.querySelectorAll(".chk-cat-item")).filter(c => c.checked);
-        let master = document.getElementById("chkCatAll");
-        master.checked = chks.length === 0;
-        atualizarTela();
-        atualizarTextoBotaoCat();
+        let master = document.getElementById("chkCatAll"); master.checked = chks.length === 0;
+        atualizarTela(); atualizarTextoBotaoCat();
     }
 
     function atualizarTextoBotaoCat() {
         let master = document.getElementById("chkCatAll");
         if (master.checked) return document.getElementById("btnFiltroCat").innerText = "Todas";
-        
-        let selecionadas = Array.from(document.querySelectorAll(".chk-cat-item"))
-            .filter(c => c.checked).map(c => c.value === "AportesSocio" ? "Aportes" : c.value);
-        
+        let selecionadas = Array.from(document.querySelectorAll(".chk-cat-item")).filter(c => c.checked).map(c => c.value === "AportesSocio" ? "Aportes" : c.value);
         if (selecionadas.length === 0) document.getElementById("btnFiltroCat").innerText = "Nenhuma";
         else if (selecionadas.length <= 2) document.getElementById("btnFiltroCat").innerText = selecionadas.join(", ");
         else document.getElementById("btnFiltroCat").innerText = selecionadas.length + " Selecionadas";
     }
-    
 </script>
 
 </body>
