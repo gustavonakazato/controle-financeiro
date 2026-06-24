@@ -994,7 +994,8 @@
         const fIni = document.getElementById("fDataInicio").value, fFim = document.getElementById("fDataFim").value;
         const fOrdem = document.getElementById("fOrdem").value;
         
-        let masterCatAtivo = document.getElementById("chkCatAll").checked;
+        let chkAll = document.getElementById("chkCatAll");
+        let masterCatAtivo = chkAll ? chkAll.checked : true;
         let listaCategoriasMarcadas = Array.from(document.querySelectorAll(".chk-cat-item")).filter(c => c.checked).map(c => c.value);
         let filtrarApenasAportes = listaCategoriasMarcadas.includes("AportesSocio");
         let categoriasReaisMarcadas = listaCategoriasMarcadas.filter(c => c !== "AportesSocio");
